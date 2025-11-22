@@ -1,5 +1,3 @@
------
-
 # 🕒 OCPP Zaman Kaydırma Saldırısı Simülasyonu (RAW WebSocket)
 
 Bu proje, Elektrikli Araç Şarj İstasyonları (EVCS) ile Merkezi Yönetim Sistemi (CSMS) arasındaki OCPP (Open Charge Point Protocol) iletişiminde **Zaman Senkronizasyonu Manipülasyonu (Time Desync Attack)** anomalisini simüle eder.
