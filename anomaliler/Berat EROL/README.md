@@ -6,6 +6,8 @@ Bu proje, elektrikli araç şarj altyapılarında (EVCS) ortaya çıkan siber g�
 
 ## 1. 🕒 Anomali Senaryosu: Zaman Kaydırma ile Enerji Maskelenmesi
 
+<img width="605" height="534" alt="image" src="https://github.com/user-attachments/assets/24859bb3-afdb-43fc-8e8d-2bc1ad258a59" />
+
 Bu çalışmanın temelini oluşturan anomali, şarj istasyonlarının faturalandırma ve yük yönetimi süreçlerini hedef almaktadır.
 
 ### Saldırı Özeti
