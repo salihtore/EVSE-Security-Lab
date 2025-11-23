@@ -25,25 +25,27 @@ Bu klasör, ekip üyeleri tarafından hazırlanan tüm güvenlik senaryolarını
 
 * **Üye Adı Altında:** Her üyenin odaklandığı anomali senaryosunun (örn: CAN Enjeksiyonu, Enerji Maskelenmesi) detaylı açıklaması ve bu senaryoya özel **SWOT Analizi** dökümanları yer alır.
 
-2. 📂 Dökümantasyon
+### 2. 📂 Dökümantasyon
+
 Bu klasör, projenin yönetim, planlama ve akademik gerekliliklerini karşılayan tüm resmi ve teknik belgeleri içermektedir.
 
 50 Maddelik Güvenlik Kontrol Listesi (Checklist): OCPP, Ağ, Veri Bütünlüğü ve Fiziksel katmanları kapsayan detaylı denetim listesi.
 
-Projeye Genel Bakış: Proje özeti ve mimari planları.
+* **Projeye Genel Bakış:** Proje özeti ve mimari planları.
 
-Zaman Çizelgesi Belgesi: Proje yönetimi ve aşamalandırma (İP1, İP2, İP3, vb.) kayıtları.
+* **Zaman Çizelgesi Belgesi:** Proje yönetimi ve aşamalandırma (İP1, İP2, İP3, vb.) kayıtları.
 
-Proje Değerlendirme Dokümanı: Değerlendirme kriterleri ve metrikler.
+* **Proje Değerlendirme Dokümanı:** Değerlendirme kriterleri ve metrikler.
 
-Takım Rehberi: Proje ekibinin organizasyon yapısını, üye listesini ve anomali senaryosu dağılımını gösteren kılavuzlar.
+* **Takım Rehberi:** Proje ekibinin organizasyon yapısını, üye listesini ve anomali senaryosu dağılımını gösteren kılavuzlar.
 
-Proje Sunumu: Ders sunumunda kullanılan materyaller (örn. PowerPoint/PDF) ve bu sunumun içerik özetleri.
+* **Proje Sunumu:** Ders sunumunda kullanılan materyaller (örn. PowerPoint/PDF) ve bu sunumun içerik özetleri.
 
-3. 📂 Simülasyon
+### 3. 📂 Simülasyon
+
 Bu klasör, geliştirilen saldırı ve savunma prototiplerinin kanıtlarını içerir:
 
-Üye Adı Altında: Her üyenin kendi anomalisine uygun olarak geliştirdiği simülasyon sisteminin kodları (Python/Raw WS/Node.js) ve saldırı ile tespitin başarılı olduğunu gösteren terminal çıktıları/logları yer alır.
+* **Üye Adı Altında:** Her üyenin kendi anomalisine uygun olarak geliştirdiği simülasyon sisteminin kodları (Python/Raw WS/Node.js) ve saldırı ile tespitin başarılı olduğunu gösteren terminal çıktıları/logları yer alır.
 
 ---
 
