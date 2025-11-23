@@ -1,4 +1,6 @@
 ELEKTRİKLİ ARAÇ ŞARJ OTURUMLARINDA  YAPAY ZEKA DESTEKLİ ANOMALİ TESPİTİ VE MÜDAHALE
+
+
 Amaç:
 Elektrikli araçların şarj oturumları sırasında meydana gelen olağandışı enerji tüketim davranışlarını, yapay zekâ tabanlı anomali tespiti yöntemleriyle belirlemek ve sistem güvenliğini artırmaktır. Bu çalışma, araç şarj işlemleri esnasında oluşabilecek beklenmedik enerji profillerini analiz ederek olası siber tehditlerin erken tespitini amaçlar.
 
@@ -13,7 +15,6 @@ Gerçek saha verilerinin sınırlı olması, modelin farklı şarj istasyonları
 
 Bana Kattıkları:
 Bu proje sürecinde yapay zekânın güvenlik sistemleriyle bütünleştirilmesi konusunda derinlemesine bilgi edindim. Gerçek zamanlı veri izleme, enerji analitiği ve anomali tespit algoritmalarının uygulama aşamalarında bilgi sahibi oldum. Ayrıca yazılım, enerji yönetimi ve siber güvenlik alanlarının kesişiminde çalışma becerilerimi geliştirdim.
- 
 
 
 
