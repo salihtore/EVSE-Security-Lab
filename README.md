@@ -29,7 +29,7 @@ Bu klasör, ekip üyeleri tarafından hazırlanan tüm güvenlik senaryolarını
 
 Bu klasör, projenin yönetim, planlama ve akademik gerekliliklerini karşılayan tüm resmi ve teknik belgeleri içermektedir.
 
-50 Maddelik Güvenlik Kontrol Listesi (Checklist): OCPP, Ağ, Veri Bütünlüğü ve Fiziksel katmanları kapsayan detaylı denetim listesi.
+* **50 Maddelik Güvenlik Kontrol Listesi (Checklist):** OCPP, Ağ, Veri Bütünlüğü ve Fiziksel katmanları kapsayan detaylı denetim listesi.
 
 * **Projeye Genel Bakış:** Proje özeti ve mimari planları.
 
