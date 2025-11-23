@@ -36,9 +36,23 @@ Bu klasör, ders gerekliliklerini ve proje yönetim çıktılarını içerir:
 
 ### 3. 📂 `Simülasyon`
 
-Bu klasör, geliştirilen saldırı ve savunma prototiplerinin kanıtlarını içerir:
+Elbette. Dökümantasyon klasörünüzün içeriğini, "Takım Rehberi" ve "Proje Sunumu" parçalarını içerecek şekilde güncelledim.
 
-* **Üye Adı Altında:** Her üyenin kendi anomalisine uygun olarak geliştirdiği simülasyon sisteminin **kodları** (Python/Raw WS/Node.js) ve saldırı ile tespitin başarılı olduğunu gösteren **terminal çıktıları/logları** yer alır.
+📂 Dökümantasyon Klasörü İçeriği Özeti
+
+Bu klasör, projenin yönetim, planlama ve akademik gerekliliklerini karşılayan tüm resmi ve teknik belgeleri içermektedir.
+
+50 Maddelik Güvenlik Kontrol Listesi (Checklist): OCPP, Ağ, Veri Bütünlüğü ve Fiziksel katmanları kapsayan detaylı denetim listesi.
+
+Projeye Genel Bakış: Proje özeti ve mimari planları.
+
+Zaman Çizelgesi Belgesi: Proje yönetimi ve aşamalandırma (İP1, İP2, İP3, vb.) kayıtları.
+
+Proje Değerlendirme Dokümanı: Değerlendirme kriterleri ve metrikler.
+
+Takım Rehberi: Proje ekibinin organizasyon yapısını, üye listesini ve anomali senaryosu dağılımını gösteren kılavuzlar.
+
+Proje Sunumu: Ders sunumunda kullanılan materyaller (örn. PowerPoint/PDF) ve bu sunumun içerik özetleri.
 
 ---
 
