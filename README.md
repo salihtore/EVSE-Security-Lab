@@ -20,44 +20,6 @@ Bu proje, bilgi güvenliği alanında profesyonel siber test ortamı sağlamak i
 
 ---
 
-## 📁 Klasör Yapısı 
-
-Aşağıdaki yapı **tüm ekip üyelerinin çalışmasını kolaylaştıracak şekilde** standardize edilmiştir:
-
-EVSE-Security-Lab/
-│
-├── Anomaliler/ → Her öğrencinin raporları, SWOT + SMART belgeleri
-│ ├── Ahmet_turan_dogan/
-│ ├── Emin_tore/
-│ ├── Merve_ozberk/
-│ ├── Semih_gumus/
-│ └── ...
-│
-├── Dashboard/ → Gerçek zamanlı görselleştirme (grafik, log, API)
-│
-├── Dokumantasyon/ → Proje dokümanları, kontrol listeleri, sunumlar
-│ ├── Genel_bakis_dokumani/
-│ ├── Proje_degerlendirme_dokumani/
-│ ├── Zaman_cizelgesi/
-│ └── Takim_rehberi/
-│
-├── Simulasyon/ → Tüm saldırı + savunma kodları (Ana araştırma alanı)
-│ ├── core/ → Ortak CSMS, Charge Point, event bus, security engine
-│ ├── semih_yetim_seans/ → Orphan Session (Yetim Oturum) saldırısı
-│ ├── emin_auth_bypass/ → Authorize Bypass senaryosu
-│ ├── merve_phantom_current/ → Phantom Current (Hayalet Akım)
-│ ├── berat_time_desync/ → Time Desync (Zaman Sapması)
-│ └── <yeni_senaryo>/ → Yeni eklenen senaryolar için şablon
-│
-├── run_all.py → Bütün senaryoları tek komutla çalıştıran araç
-│
-└── README.md → Bu dosya
-
----
-
-
----
-
 ## 💻 Kullanılan Teknolojiler
 
 | Katman | Teknolojiler | Amaç |
