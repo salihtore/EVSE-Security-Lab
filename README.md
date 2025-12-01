@@ -20,18 +20,6 @@ Saldırı/savunma simülasyonları, çekirdek mekanizmalar ve protokol modelleri
 
 Tüm raporlar, senaryolar, gereksinim dokümanları ve proje dökümanları docs branchine taşınmıştır.
 
-📂 docs Branch İçeriği
-docs/
-│── Anomaliler/
-│── Dokumantasyon/
-│     ├── Proje Sunumu
-│     ├── Genel Bakış Dokümanı
-│     ├── Gereksinimler
-│     ├── Zaman Çizelgesi
-│     ├── Takım Rehberi
-│     └── Değerlendirme Dokümanları
-
-
 Bu sayede kod ve dokümanlar birbirine karışmaz. Kod incelemeleri temiz kalır.
 
 🧭 Branch Stratejisi
