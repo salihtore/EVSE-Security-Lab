@@ -1,76 +1,148 @@
-# ⚡ EVSE Security Lab  
-**Akıllı Şarj İstasyonlarında (EVSE) Siber-Fiziksel Güvenlik Test ve Simülasyon Platformu**
+EVSE Security Lab
 
-Bu proje, elektrikli araç şarj altyapılarında kullanılan **OCPP (Open Charge Point Protocol)** protokolünün güvenlik açıklarını analiz etmek, gerçekçi saldırı senaryoları üretmek ve şarj istasyonu – CSMS arasındaki iletişimi test etmek amacıyla geliştirilmiş bütünleşik bir **siber-fiziksel güvenlik laboratuvarıdır**.
+Elektrikli Araç Şarj İstasyonları (EVSE) için saldırı–savunma odaklı bir siber güvenlik laboratuvarı.
+Proje; OCPP → CAN-Bus köprüsü, anomali tespiti, saldırı simülasyonları, savunma modülü ve yapay zekâ tabanlı davranış analizi içerir.
 
-Platform hem **saldırı simülasyonu**, hem **anomali tespiti**, hem de **savunma geliştirme** senaryolarını destekler.  
-Modüler yapısı ile her ekip üyesi kendi OCPP anomalisini bağımsız şekilde geliştirebilir.
+Bu repo hem akademik çalışma hem de pratik saldırı/savunma laboratuvarı olarak tasarlanmıştır.
 
----
+🚀 İçerik
 
-## 🎯 Projenin SMART Hedefleri
+Bu depo iki temel bileşenden oluşur:
 
-Bu proje, bilgi güvenliği alanında profesyonel siber test ortamı sağlamak için aşağıdaki SMART hedeflere göre tasarlanmıştır:
+1) Kod (main / dev branchleri)
 
-- **≥ %95 doğruluk** ile OCPP anomali tespiti  
-- **Gerçek zamanlı enerji hırsızlığı tespiti** (≥ %90 hassasiyet)  
-- Kritik saldırılara karşı **≤ 30 saniye tepki süresi**  
-- OCPP 1.6 → OCPP 2.0.1 geçişinde **tam uyumluluk**  
-- Sistem bileşenlerinde **ISO 27001 / ISO 15118** prensiplerine bağlılık  
+Kod tamamen main ve dev branchlerinde tutulur.
 
----
+Saldırı/savunma simülasyonları, çekirdek mekanizmalar ve protokol modelleri buradadır.
 
-## 💻 Kullanılan Teknolojiler
+📂 Klasör Yapısı
+Simulasyon/
+│   ├── ahmet_thermal_manipulation
+│   ├── berat_time_desync
+│   ├── emin_auth_bypass
+│   ├── kadir_can_injection
+│   ├── melik_replay_attack
+│   ├── merve_phantom_current
+│   ├── omer_zero_energy_flood
+│   ├── semih_yetim_seans
+│   └── core (ortak simülasyon bileşenleri)
 
-| Katman | Teknolojiler | Amaç |
-|-------|--------------|------|
-| **Protokol** | OCPP 1.6-J, JSON RPC | EVSE ↔ CSMS iletişimi |
-| **Backend** | Python (asyncio, websockets), Node.js | Senaryo geliştirme |
-| **Güvenlik** | Autoencoder, Isolation Forest, SVM | Anomali tespiti |
-| **Blockchain** | Hyperledger Fabric / Ethereum | Log sahteciliğini engelleme |
-| **Araçlar** | GitHub, Trello, VSCode | Takım işbirliği |
+src/
+│   ├── attacks     (OCPP/CAN saldırı modülleri)
+│   ├── defense     (AI + IDS savunma modülü)
+│   ├── canbus      (CAN-Bus model & gateway)
+│   └── core        (ortak protokol/altyapı bileşenleri)
 
----
 
-## 🛠 Kurulum
+Ana sistem; CSMS, Charge Point, CAN-Bus gateway ve IDS katmanlarını içeren modüler bir yapıdır.
 
-```bash
+2) Dokümantasyon (docs branchi)
+
+Tüm raporlar, senaryolar, gereksinim dokümanları ve proje dökümanları docs branchine taşınmıştır.
+
+📂 docs Branch İçeriği
+docs/
+│── Anomaliler/
+│── Dokumantasyon/
+│     ├── Proje Sunumu
+│     ├── Genel Bakış Dokümanı
+│     ├── Gereksinimler
+│     ├── Zaman Çizelgesi
+│     ├── Takım Rehberi
+│     └── Değerlendirme Dokümanları
+
+
+Bu sayede kod ve dokümanlar birbirine karışmaz. Kod incelemeleri temiz kalır.
+
+🧭 Branch Stratejisi
+Branch	İçerik	Kurallar
+main	Stabil, test edilmiş, sunuma hazır kod	Protected, direkt push yasak
+dev	Geliştirme ortamı, yeni özellikler	Commit serbest
+docs	PDF, DOCX, raporlar, anomali dosyaları	Kod içermez
+Akış:
+
+Kod → dev
+
+Test sonrası → Pull Request → main
+
+Dokümanlar → docs
+
+Kurumsal projelerdeki GitFlow yapısının sadeleştirilmiş hâlidir.
+
+⚙️ Kurulum
+1. Depoyu klonla
 git clone https://github.com/salihtore/EVSE-Security-Lab.git
 cd EVSE-Security-Lab
+
+2. Sanal ortamı başlat
 python -m venv venv
-venv\Scripts\activate
+venv\Scripts\activate  # Windows
+# veya
+source venv/bin/activate  # Linux/Mac
+
+3. Gereksinimleri yükle
 pip install -r requirements.txt
- ``` 
-
----
-
-▶️ Simülasyon Çalıştırma
-
-Tek senaryo: 
-python Simulasyon/<senaryo_adı>/scenario.py
-
-Tüm senaryolar:
-python run_all.py
-
----
-
-🧱 Yeni Senaryo Geliştirme Standartları
-
-Yeni klasör eklenir:
-Simulasyon/<senaryo_adı>/
-
-Dosya yapısı:
-
-scenario.py  
-charge_point.py  
-csms.py           (opsiyonel)
-anomaly_detector.py (opsiyonel)
 
 
-Türkçe karakter kullanılmaz
+🛡️ Savunma Modülü (IDS + AI)
 
-Kod stili PEP8’e uygundur
+src/defense/ dizini altında:
 
-PR açmadan önce:
+Paket bazlı kontrol
 
-git pull
+Zaman serisi anomalisi
+
+Session-state kontrolü
+
+Hızlı tepki (RemoteStopTransaction)
+
+Yapay zekâ model entegrasyonu
+
+Savunma modülü; OCPP ve CAN trafiğini eşzamanlı analiz ederek hem reaktif hem proaktif mekanizmalar içerir.
+
+📄 Belgelere Erişim
+
+Tüm raporlar burada:
+
+docs branch:
+
+https://github.com/salihtore/EVSE-Security-Lab/tree/docs/docs
+
+
+PDF/DOCX’ler → bu branch içerisindedir.
+
+👥 Takım & Yapı
+
+Backend, CAN-Bus, saldırı/lab simülasyonu, IDS, AI ve dokümantasyon ekipleri
+
+Her anomali bir öğrenci tarafından bağımsız modül olarak geliştirilir
+
+Kod mimarisi modüler ve genişletilebilir
+
+🧰 Katkıda Bulunma (Contribution)
+
+Fork → dev branch aç
+
+Yeni özellik → dev
+
+PR → main
+
+Kod incelemeden sonra merge
+
+Dokümantasyon katkısı → docs branch.
+
+🏁 Amaç
+
+Bu lab:
+
+EVSE güvenlik açıklarını anlamak
+
+OCPP üzerinden saldırıları modellemek
+
+CAN-Bus manipülasyonları simüle etmek
+
+Gerçek zamanlı AI destekli savunma geliştirmek
+
+Bir akademik/kurumsal EVSE güvenlik platformu için temel oluşturmak
+
+için tasarlanmıştır.
