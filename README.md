@@ -15,26 +15,6 @@ Kod tamamen main ve dev branchlerinde tutulur.
 
 Saldırı/savunma simülasyonları, çekirdek mekanizmalar ve protokol modelleri buradadır.
 
-📂 Klasör Yapısı
-Simulasyon/
-│   ├── ahmet_thermal_manipulation
-│   ├── berat_time_desync
-│   ├── emin_auth_bypass
-│   ├── kadir_can_injection
-│   ├── melik_replay_attack
-│   ├── merve_phantom_current
-│   ├── omer_zero_energy_flood
-│   ├── semih_yetim_seans
-│   └── core (ortak simülasyon bileşenleri)
-
-src/
-│   ├── attacks     (OCPP/CAN saldırı modülleri)
-│   ├── defense     (AI + IDS savunma modülü)
-│   ├── canbus      (CAN-Bus model & gateway)
-│   └── core        (ortak protokol/altyapı bileşenleri)
-
-
-Ana sistem; CSMS, Charge Point, CAN-Bus gateway ve IDS katmanlarını içeren modüler bir yapıdır.
 
 2) Dokümantasyon (docs branchi)
 
