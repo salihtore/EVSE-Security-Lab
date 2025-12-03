@@ -1,103 +1,64 @@
-# Simulasyon/emin_auth_bypass/scenario.py
-
 import asyncio
-import websockets
 import logging
-
-from Simulasyon.core.event_bus import emit_event
+import websockets
+from .charge_point import SimulatedChargePoint
 
 logging.basicConfig(level=logging.INFO)
 
-CSMS_URI = "ws://127.0.0.1:9002/CP_EMIN"
+
+async def normal_flow(cp: SimulatedChargePoint):
+    print("🔵 NORMAL AKIŞ BAŞLADI")
+    await cp.send_boot_notification()
+    await cp.start_charging()
+
+    for _ in range(5):
+        await cp.simulate_meter_values()
+        await asyncio.sleep(1)
+
+    await cp.stop_charging()
+    print("🔵 NORMAL AKIŞ BİTTİ")
+
+
+async def attack_flow(cp: SimulatedChargePoint):
+    cp.attack_mode = True
+
+    print("😈 HACKER: Authentication Bypass başlatılıyor...")
+    await asyncio.sleep(1)
+
+    await cp.send_boot_notification()
+
+    # ⭐ SALDIRI: Authorize atlanarak StartTransaction gönderiliyor
+    print("🚀 SALDIRI: Yetki olmadan StartTransaction gönderiliyor!")
+    await cp.start_charging()
+
+    for _ in range(5):
+        await cp.simulate_meter_values()
+        await asyncio.sleep(1)
+
+    print("⚠ SALDIRI: StopTransaction yine de gönderiliyor.")
+    await cp.stop_charging()
+
+    print("😈 AUTH BYPASS SALDIRISI TAMAMLANDI")
 
 
 async def run_normal():
-    """
-    Normal akış: Authorize -> Accepted -> StartTransaction
-    Bu akışta alarm BEKLENMEZ.
-    """
-    async with websockets.connect(CSMS_URI, subprotocols=["ocpp1.6"]) as ws:
-        
-        # 1) AUTH
-        emit_event(
-            senaryo="AuthBypass",
-            cp_id="CP_EMIN",
-            message_type="Authorize",
-            idTag="VALID123",
-            source="CP"
-        )
-        await asyncio.sleep(1)
-
-        # 2) Accept geldi varsayıyoruz (normal akış)
-        emit_event(
-            senaryo="AuthBypass",
-            cp_id="CP_EMIN",
-            message_type="Authorize.conf",
-            idTag="VALID123",
-            auth_status="Accepted",
-            source="CSMS"
-        )
-        await asyncio.sleep(1)
-
-        # 3) StartTransaction (normal)
-        emit_event(
-            senaryo="AuthBypass",
-            cp_id="CP_EMIN",
-            message_type="StartTransaction",
-            idTag="VALID123",
-            transactionId=111,
-            session_active=True,
-            source="CP"
-        )
-
-        await asyncio.sleep(2)
+    uri = "ws://127.0.0.1:9000/CP_EMIN"
+    async with websockets.connect(uri, subprotocols=["ocpp1.6"]) as ws:
+        cp = SimulatedChargePoint("CP_EMIN", ws)
+        await asyncio.gather(cp.start(), normal_flow(cp))
 
 
 async def run_attack():
-    """
-    Saldırı akışı: AUTH YOK, DOĞRUDAN StartTransaction geliyor.
-    Ana motor bunu AUTH_BYPASS olarak yakalayacak.
-    """
-    async with websockets.connect(CSMS_URI, subprotocols=["ocpp1.6"]) as ws:
-
-        # Hiç AUTHORIZE yollamadan direk StartTransaction
-        emit_event(
-            senaryo="AuthBypass",
-            cp_id="CP_EMIN",
-            message_type="StartTransaction",
-            idTag="HACKER123",
-            transactionId=999,
-            session_active=True,
-            source="ATTACKER"
-        )
-
-        await asyncio.sleep(2)
-
-        # Ek saldırı: sahte Accepted mesajını hacker gönderiyor
-        emit_event(
-            senaryo="AuthBypass",
-            cp_id="CP_EMIN",
-            message_type="Authorize.conf",
-            idTag="HACKER123",
-            auth_status="Accepted",
-            source="ATTACKER"
-        )
-
-        await asyncio.sleep(2)
-
-        # Normal Stop (mantık gereği)
-        emit_event(
-            senaryo="AuthBypass",
-            cp_id="CP_EMIN",
-            message_type="StopTransaction",
-            session_active=False,
-            transactionId=999,
-            source="CP"
-        )
+    uri = "ws://127.0.0.1:9000/CP_EMIN"
+    async with websockets.connect(uri, subprotocols=["ocpp1.6"]) as ws:
+        cp = SimulatedChargePoint("CP_EMIN", ws)
+        await asyncio.gather(cp.start(), attack_flow(cp))
 
 
-def run_scenario(scenario="attack"):
-    if scenario == "normal":
-        asyncio.run(run_normal())
-    else:
+def run_scenario(mode: str = "normal"):
+    if mode == "attack":
+        logging.error("⚠ AUTH BYPASS: SALDIRI MODU BAŞLIYOR")
         asyncio.run(run_attack())
+    else:
+        logging.info("✔ AUTH BYPASS: NORMAL MOD BAŞLIYOR")
+        asyncio.run(run_normal())
