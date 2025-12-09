@@ -1,0 +1,78 @@
+# ==============================
+# PYTHON / ML / WEB PROJECT GITIGNORE
+# ==============================
+
+# ---- Python cache ----
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.log
+
+# ---- Virtual environments ----
+venv/
+ENV/
+env/
+.venv/
+*.env
+
+# ---- Build / packaging ----
+build/
+dist/
+*.egg-info/
+.eggs/
+*.whl
+
+# ---- Byte-compiled / temporary files ----
+*.~*
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ---- Jupyter ----
+.ipynb_checkpoints/
+*.ipynb
+
+# ---- VSCode / JetBrains ----
+.vscode/
+.idea/
+
+# ---- Node / Web (just in case) ----
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# ---- FastAPI / Uvicorn cache ----
+*.sqlite3
+__pycache__/
+htmlcov/
+coverage.xml
+
+# ---- Logs ----
+*.log
+logs/
+
+# ---- OS-specific ----
+Thumbs.db
+desktop.ini
+
+# ---- Custom for EVSE Security Lab ----
+Dashboard/__pycache__/
+Simulasyon/__pycache__/
+Simulasyon/*/__pycache__/
+
+# Avoid committing large model or dataset files
+*.h5
+*.pkl
+*.csv
+*.npy
+*.npz
+
+# ---- Ignore your screenshots ----
+*.png
+*.jpg
+*.jpeg
+
