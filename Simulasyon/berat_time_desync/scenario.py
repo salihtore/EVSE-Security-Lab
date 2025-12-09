@@ -1,74 +1,64 @@
-# Simulasyon/berat_time_desync/scenario.py
-
+# Dosya: Simulasyon/berat_time_desync/scenario.py
 import asyncio
-import time
 import logging
-
-from Simulasyon.core.event_bus import emit_event
+import websockets
+# Modülleri içe aktar
+from .hacker import send_attack_data, REPORTED_CONSUMPTION_KWH 
+from .istasyon import istasyon_logic
 
 logging.basicConfig(level=logging.INFO)
 
-CP_ID = "CP_BERAT"
+# --- SENARYO PARAMETRELERİ ---
+SENARYO_PATH = '/CP_BERAT'
+SUNUCU_ADRESI = f'ws://localhost:9000{SENARYO_PATH}' 
 
+async def run_attack():
+    """Zaman Kaydırma ve Değer Düşürme saldırı modunu başlatır."""
+    print("\n[SCENARIO] 💣 ZAMAN KAYDIRMA SALDIRISI BAŞLADI (Çift Anomali)")
+    
+    # 1. CP bağlantısını kur (istasyon.py)
+    # 2. Saldırgan bağlantısını kur (hacker.py)
+    
+    try:
+        # Aynı anda hem CP hem de Saldırgan CSMS'e bağlanmalı (Tek bir WebSocket üzerinden).
+        # Ancak basitlik ve istikrar için, burada CP'nin kendisi saldırgan rolünü üstleniyor gibi gösterilir.
+        # En temiz çözüm, CP'nin kendisinin saldırgan mantığını başlatmasıdır.
+        async with websockets.connect(SUNUCU_ADRESI, subprotocols=['ocpp1.6']) as websocket:
+            print(f"[SCENARIO] ✅ Bağlantı başarılı: {SUNUCU_ADRESI}")
+            
+            # Normal CP akışını başlat (Mesaj döngüsü)
+            cp_task = asyncio.create_task(istasyon_logic(websocket, mode="ATTACK"))
+            
+            # Saldırı verilerini gönderme görevini başlat (Hacker/Anomali)
+            attack_task = asyncio.create_task(send_attack_data(websocket))
+            
+            # Her iki görevin de bitmesini bekle
+            await asyncio.gather(cp_task, attack_task)
+            
+    except ConnectionRefusedError:
+        logging.error("[SCENARIO] ❌ Sunucuya bağlanılamadı. Core CSMS çalışmıyor olabilir.")
+    except Exception as e:
+        logging.error(f"[SCENARIO] Beklenmedik hata: {e}")
 
 async def run_normal():
-    """
-    Normal durumda CP ve CSMS saatleri senkron:
-    cp_timestamp ≈ csms_time → ALARM BEKLENMEZ.
-    """
-    logging.info("\n--- TIME DESYNC NORMAL SENARYO ---")
-
-    for i in range(5):
-        csms_ts = time.time()            # CSMS'in gerçek saati
-        cp_ts = csms_ts                  # CP saati doğru
-
-        emit_event(
-            senaryo="TimeDesync",
-            cp_id=CP_ID,
-            message_type="MeterValues",
-            cp_timestamp=cp_ts,
-            csms_time=csms_ts,
-            source="CP"
-        )
-
-        logging.info(f"[NORMAL] cp_ts={cp_ts}, csms_ts={csms_ts}")
-        await asyncio.sleep(1)
+    """Anomalisiz normal akışı başlatır (Sadece güvenli CP davranışı)."""
+    
+    print("\n[SCENARIO] 🟢 NORMAL MOD BAŞLADI (Anomalisiz Akış)")
+    
+    try:
+        async with websockets.connect(SUNUCU_ADRESI, subprotocols=['ocpp1.6']) as websocket:
+            print(f"[SCENARIO] ✅ Bağlantı başarılı: {SUNUCU_ADRESI}")
+            # Sadece güvenli CP mantığını çalıştır
+            await istasyon_logic(websocket, mode="NORMAL")
+            
+    except ConnectionRefusedError:
+        logging.error("[SCENARIO] ❌ Sunucuya bağlanılamadı. Core CSMS çalışmıyor olabilir.")
+    except Exception as e:
+        logging.error(f"[SCENARIO] Beklenmedik hata: {e}")
 
 
-async def run_attack(offset_hours: float = 2.0):
-    """
-    Saldırı: CP'nin saati kaydırılıyor (ör: +2 saat).
-    cp_timestamp ile csms_time arasındaki fark > 300 saniye → TIME_DESYNC ALARMI.
-    """
-    logging.warning("\n--- TIME DESYNC SALDIRI SENARYOSU (CP SAATİ KAYMIŞ) ---")
-
-    offset_sec = offset_hours * 3600
-
-    for i in range(5):
-        csms_ts = time.time()               # CSMS'in gerçek saati
-        cp_ts = csms_ts + offset_sec        # CP'nin bozulan saati
-
-        emit_event(
-            senaryo="TimeDesync",
-            cp_id=CP_ID,
-            message_type="MeterValues",
-            cp_timestamp=cp_ts,
-            csms_time=csms_ts,
-            source="CP_ATTACKER"
-        )
-
-        logging.info(
-            f"[ATTACK] cp_ts={cp_ts}, csms_ts={csms_ts}, diff={cp_ts - csms_ts:.1f} s"
-        )
-        await asyncio.sleep(1)
-
-
-def run_scenario(scenario: str = "attack"):
-    """
-    Dışarıdan şu şekilde çağrılacak:
-      - run_scenario("normal")
-      - run_scenario("attack")
-    """
+def run_scenario(scenario="attack"):
+    """Ana motor (run_all.py) tarafından çağrılan giriş noktası."""
     if scenario == "normal":
         asyncio.run(run_normal())
     else:
