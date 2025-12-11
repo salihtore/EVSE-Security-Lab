@@ -1,74 +1,36 @@
-# Simulasyon/berat_time_desync/scenario.py
-
+# Dosya: Simulasyon/berat_time_desync/scenario.py
 import asyncio
-import time
 import logging
-
-from Simulasyon.core.event_bus import emit_event
+# Modülleri içe aktar
+from .payload_generator import get_manipulated_data 
+from .cp_simulator import cp_event_flow            
 
 logging.basicConfig(level=logging.INFO)
 
-CP_ID = "CP_BERAT"
+# --- SENARYO KOŞUCU FONKSİYONLARI ---
 
+async def run_attack():
+    """Zaman Kaydırma ve Değer Düşürme saldırı modunu başlatır."""
+    print("\n[SCENARIO] 💣 ZAMAN KAYDIRMA SALDIRISI BAŞLADI (Çift Anomali)")
+    
+    # cp_event_flow'u çağır ve manipülasyon verisini alacağı fonksiyonu ver
+    await cp_event_flow(mode="ATTACK", get_manipulated_data=get_manipulated_data)
+    
+    print("[SCENARIO] Saldırı simülasyonu tamamlandı.")
 
 async def run_normal():
-    """
-    Normal durumda CP ve CSMS saatleri senkron:
-    cp_timestamp ≈ csms_time → ALARM BEKLENMEZ.
-    """
-    logging.info("\n--- TIME DESYNC NORMAL SENARYO ---")
-
-    for i in range(5):
-        csms_ts = time.time()            # CSMS'in gerçek saati
-        cp_ts = csms_ts                  # CP saati doğru
-
-        emit_event(
-            senaryo="TimeDesync",
-            cp_id=CP_ID,
-            message_type="MeterValues",
-            cp_timestamp=cp_ts,
-            csms_time=csms_ts,
-            source="CP"
-        )
-
-        logging.info(f"[NORMAL] cp_ts={cp_ts}, csms_ts={csms_ts}")
-        await asyncio.sleep(1)
+    """Anomalisiz normal akışı başlatır."""
+    
+    print("\n[SCENARIO] 🟢 NORMAL MOD BAŞLADI (Anomalisiz Akış)")
+    
+    # Normal modda, manipülasyon verisi fonksiyonunu göndermiyoruz
+    await cp_event_flow(mode="NORMAL")
+    
+    print("[SCENARIO] Normal simülasyon tamamlandı.")
 
 
-async def run_attack(offset_hours: float = 2.0):
-    """
-    Saldırı: CP'nin saati kaydırılıyor (ör: +2 saat).
-    cp_timestamp ile csms_time arasındaki fark > 300 saniye → TIME_DESYNC ALARMI.
-    """
-    logging.warning("\n--- TIME DESYNC SALDIRI SENARYOSU (CP SAATİ KAYMIŞ) ---")
-
-    offset_sec = offset_hours * 3600
-
-    for i in range(5):
-        csms_ts = time.time()               # CSMS'in gerçek saati
-        cp_ts = csms_ts + offset_sec        # CP'nin bozulan saati
-
-        emit_event(
-            senaryo="TimeDesync",
-            cp_id=CP_ID,
-            message_type="MeterValues",
-            cp_timestamp=cp_ts,
-            csms_time=csms_ts,
-            source="CP_ATTACKER"
-        )
-
-        logging.info(
-            f"[ATTACK] cp_ts={cp_ts}, csms_ts={csms_ts}, diff={cp_ts - csms_ts:.1f} s"
-        )
-        await asyncio.sleep(1)
-
-
-def run_scenario(scenario: str = "attack"):
-    """
-    Dışarıdan şu şekilde çağrılacak:
-      - run_scenario("normal")
-      - run_scenario("attack")
-    """
+def run_scenario(scenario="attack"):
+    """Ana motor (run_all.py) tarafından çağrılan giriş noktası."""
     if scenario == "normal":
         asyncio.run(run_normal())
     else:
