@@ -59,7 +59,6 @@ async def cp_event_flow(mode="ATTACK", get_manipulated_data=None):
 
     # 2. Authorize (CP İsteği)
     emit_event(senaryo=SCENARIO_NAME, cp_id=CP_ID, message_type="Authorize", idTag="BERAT123", source="CP")
-    await asyncio.sleep(1)
     
     # 2.5. KRİTİK EKLEME: Authorize.conf (CSMS Onayı)
     # Bu, CSMS'in yetkiyi verdiğini simüle eder.
@@ -71,7 +70,6 @@ async def cp_event_flow(mode="ATTACK", get_manipulated_data=None):
         idTag="BERAT123", 
         source="CSMS" 
     )
-    await asyncio.sleep(1)
 
 
     # 3. StartTransaction (KRİTİK DÜZELTME BURADA!)
