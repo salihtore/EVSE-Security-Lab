@@ -9,15 +9,15 @@ from core.core_cp import send_message_to_core
 
 async def send_start_transaction(cp_id: str, mode: str):
     """
-    StartTransaction mesajını oluşturur ve core'a gönderir.
-    - NORMAL modda transaction_id random (alarm tetiklemez)
-    - ATTACK modunda transaction_id = 999 (alarm tetikler)
+    StartTransaction oluşturur ve core'a yollar.
+    - NORMAL mod: random transaction_id → AUTH_BYPASS tetiklemez
+    - ATTACK mod: sabit 999 → anomali için
     """
 
     if mode.upper() == "NORMAL":
         transaction_id = random.randint(1000, 9999)
     else:
-        transaction_id = 999  # Attack modda sabit ID
+        transaction_id = 999
 
     payload = {
         "timestamp": time.time(),
@@ -33,16 +33,17 @@ async def send_start_transaction(cp_id: str, mode: str):
     return transaction_id
 
 
-
 async def send_meter_values(cp_id: str, count: int, mode: str, get_manipulated_data=None):
     """
     MeterValue gönderir.
-    - NORMAL mod: normal değerler
-    - ATTACK mod: get_manipulated_data kullanılır
+    NORMAL mod: sabit 50.0 kWh
+    ATTACK mod: manipüle edilmiş payload
     """
+
     for i in range(count):
         await asyncio.sleep(1)
 
+        # Attack modunda manipüle edilmiş değer kullan
         if mode.upper() == "ATTACK" and get_manipulated_data:
             payload = get_manipulated_data(cp_id)
             print(f"[CP_{cp_id}] 💣 Anomali MeterValue gönderildi ({i+1}/{count}).")
@@ -60,14 +61,13 @@ async def send_meter_values(cp_id: str, count: int, mode: str, get_manipulated_d
         await send_message_to_core(payload)
 
 
-
 async def cp_event_flow(mode="NORMAL", get_manipulated_data=None):
     """
-    Tam CP akışı:
-    1. StartTransaction
-    2. 3 adet MeterValue
-    3. (İsteğe bağlı) StopTransaction eklenebilir
+    CP Akışı:
+    1) StartTransaction
+    2) 3 adet MeterValue
     """
+
     cp_id = "CP_BERAT"
 
     print(f"\n[CP_{cp_id}] 📡 StartTransaction gönderiliyor...")
@@ -76,5 +76,3 @@ async def cp_event_flow(mode="NORMAL", get_manipulated_data=None):
     await send_meter_values(cp_id, 3, mode, get_manipulated_data)
 
     print(f"[CP_{cp_id}] ✅ Senaryo Akışı Tamamlandı.")
-
-
