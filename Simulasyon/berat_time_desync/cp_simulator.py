@@ -1,75 +1,80 @@
-# EVSE-Security-Lab/core/cp_simulator.py
-
+# Dosya: Simulasyon/berat_time_desync/cp_simulator.py
+import asyncio
 import time
-from core.ocpp_sender import send_message
-from core.utils.logger import log_info, log_attack, log_alarm
+import random
 
-class CPSimulator:
-    def __init__(self, cp_id, mode, anomaly_payload_generator=None):
-        self.cp_id = cp_id
-        self.mode = mode
-        self.anomaly_payload_generator = anomaly_payload_generator
+# Core sistem fonksiyonları
+from core.core_cp import send_message_to_core
 
-    def start_transaction(self):
-        """
-        Normal mod: Temiz StartTransaction gönder (alarm tetiklemez)
-        Attack mod: Kimlik atlama saldırısına uygun manipüle mesaj gönderir (alarm tetikler)
-        """
-        if self.mode == "attack":
-            log_attack(f"{self.cp_id} saldırılı StartTransaction gönderiyor...")
 
-            message = {
-                "timestamp": time.time(),
-                "senaryo": "TimeDesync",
-                "cp_id": self.cp_id,
-                "message_type": "StartTransaction",
-                "transaction_id": 999,     # saldırı için özel ID
-                "source": "CP"
-            }
+async def send_start_transaction(cp_id: str, mode: str):
+    """
+    StartTransaction mesajını oluşturur ve core'a gönderir.
+    - NORMAL modda transaction_id random (alarm tetiklemez)
+    - ATTACK modunda transaction_id = 999 (alarm tetikler)
+    """
 
-            send_message(message)
-            return message
+    if mode.upper() == "NORMAL":
+        transaction_id = random.randint(1000, 9999)
+    else:
+        transaction_id = 999  # Attack modda sabit ID
 
+    payload = {
+        "timestamp": time.time(),
+        "senaryo": "TimeDesync",
+        "cp_id": cp_id,
+        "message_type": "StartTransaction",
+        "transaction_id": transaction_id,
+        "source": "CP"
+    }
+
+    await send_message_to_core(payload)
+
+    return transaction_id
+
+
+
+async def send_meter_values(cp_id: str, count: int, mode: str, get_manipulated_data=None):
+    """
+    MeterValue gönderir.
+    - NORMAL mod: normal değerler
+    - ATTACK mod: get_manipulated_data kullanılır
+    """
+    for i in range(count):
+        await asyncio.sleep(1)
+
+        if mode.upper() == "ATTACK" and get_manipulated_data:
+            payload = get_manipulated_data(cp_id)
+            print(f"[CP_{cp_id}] 💣 Anomali MeterValue gönderildi ({i+1}/{count}).")
         else:
-            log_info(f"{self.cp_id} temiz StartTransaction gönderiyor...")
-
-            # Normal akışta sahte transaction_id kullanılmayacak
-            message = {
+            payload = {
                 "timestamp": time.time(),
                 "senaryo": "TimeDesync",
-                "cp_id": self.cp_id,
-                "message_type": "StartTransaction",
-                "transaction_id": 1,       # normal bir değer
+                "cp_id": cp_id,
+                "message_type": "MeterValue",
+                "value": 50.0,
                 "source": "CP"
             }
+            print(f"[CP_{cp_id}] 🟢 Normal MeterValue gönderildi ({i+1}/{count}).")
 
-            send_message(message)
-            return message
+        await send_message_to_core(payload)
 
-    def send_meter_values(self, count=3):
-        """
-        Normal mod: ölçüm değerlerini olduğu gibi gönderir.
-        Attack mod: anomaly_payload_generator üzerinden kaydırılmış değer üretir.
-        """
 
-        for i in range(count):
-            if self.mode == "attack" and self.anomaly_payload_generator:
-                anomalous_payload = self.anomaly_payload_generator.generate()
-                log_attack(f"{self.cp_id} anomalili MeterValue gönderildi ({i+1}/{count}).")
-                send_message(anomalous_payload)
 
-            else:
-                normal_payload = {
-                    "timestamp": time.time(),
-                    "cp_id": self.cp_id,
-                    "senaryo": "TimeDesync",
-                    "message_type": "MeterValues",
-                    "value": 50.0,  # normal enerji okuması
-                    "source": "CP"
-                }
-                log_info(f"[{self.cp_id}] 🟢 Normal MeterValue gönderildi ({i+1}/{count}).")
-                send_message(normal_payload)
+async def cp_event_flow(mode="NORMAL", get_manipulated_data=None):
+    """
+    Tam CP akışı:
+    1. StartTransaction
+    2. 3 adet MeterValue
+    3. (İsteğe bağlı) StopTransaction eklenebilir
+    """
+    cp_id = "CP_BERAT"
 
-            time.sleep(0.3)
+    print(f"\n[CP_{cp_id}] 📡 StartTransaction gönderiliyor...")
+    transaction_id = await send_start_transaction(cp_id, mode)
 
-        log_info(f"{self.cp_id} ✓ Senaryo Akışı Tamamlandı.")
+    await send_meter_values(cp_id, 3, mode, get_manipulated_data)
+
+    print(f"[CP_{cp_id}] ✅ Senaryo Akışı Tamamlandı.")
+
+
