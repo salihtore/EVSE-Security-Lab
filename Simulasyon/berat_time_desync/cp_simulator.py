@@ -26,7 +26,8 @@ async def send_attack_meter_values(get_manipulated_data):
             timestamp=data["timestamp"],
             meter_value=data["reported_kwh"],
             transaction_id=data["transaction_id"],
-            source="ATTACKER"
+            # CRITICAL DÜZELTME BURADA: Kaynağı CP olarak gösteriyoruz
+            source="CP" # <-- DÜZELTİLDİ: "ATTACKER" yerine "CP"
         )
         print(f"[CP_BERAT] 💣 Anomali MeterValue gönderildi ({i}/3).")
 
