@@ -5,6 +5,8 @@ from datetime import datetime
 
 # CRITICAL: Core CSMS'e event üretmek için zorunlu import
 from Simulasyon.core.event_bus import emit_event 
+# Saldırı verisini hazırlayan modül
+# NOTE: Bu dosya, scenario.py'den içe aktarılan payload_generator.py'yi temsil eder.
 
 # Senaryo Tanımlayıcıları
 CP_ID = "CP_BERAT"
@@ -22,7 +24,6 @@ async def send_attack_meter_values(get_manipulated_data):
         data = get_manipulated_data()
         
         # CRITICAL: EMIT EVENT formatında MeterValues gönderimi
-        # Ana Motor (CSMS), bu eventi alır ve MeterValues'daki TIMESTAMP ile METER_VALUE'yu analiz eder.
         emit_event(
             senaryo=SCENARIO_NAME,
             cp_id=CP_ID,
@@ -63,11 +64,24 @@ async def cp_event_flow(mode="ATTACK", get_manipulated_data=None):
     emit_event(senaryo=SCENARIO_NAME, cp_id=CP_ID, message_type="BootNotification", source="CP")
     await asyncio.sleep(1) 
 
-    # 2. Authorize
+    # 2. Authorize (CP İsteği)
     emit_event(senaryo=SCENARIO_NAME, cp_id=CP_ID, message_type="Authorize", idTag="BERAT123", source="CP")
     await asyncio.sleep(1)
+    
+    # 2.5. KRİTİK EKLEME: Authorize.conf (CSMS Onayı)
+    # Bu, "AUTH_BYPASS" yanlış alarmını engeller.
+    emit_event(
+        senaryo=SCENARIO_NAME,
+        cp_id=CP_ID,
+        message_type="Authorize.conf",
+        auth_status="Accepted", # Kabul edildi onayı
+        idTag="BERAT123",
+        source="CSMS" # Kaynak CSMS olmalı
+    )
+    await asyncio.sleep(1)
 
-    # 3. StartTransaction
+
+    # 3. StartTransaction (CP işleme başlar)
     emit_event(senaryo=SCENARIO_NAME, cp_id=CP_ID, message_type="StartTransaction", transaction_id=999, source="CP")
     await asyncio.sleep(1)
 
