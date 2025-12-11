@@ -9,16 +9,18 @@ REPORTED_CONSUMPTION_KWH = 35.0 # Manipüle edilen değer
 def get_manipulated_data():
     """Zaman ve değer manipülasyonunu yaparak anomali verisini döndürür."""
     
-    # 1. ZAMAN MANİPÜLASYONU
+    # 1. ZAMAN MANİPÜLASYONU (UTC)
     dt = datetime.now(timezone.utc) - timedelta(hours=TIME_SHIFT_HOURS)
     recorded_time_str = dt.isoformat(timespec='seconds').replace('+00:00', 'Z')
+    recorded_epoch = dt.timestamp()
     
     # Saldırının özeti (Loglama amaçlı)
     print(f"[PAYLOAD_GEN] 💾 Kaydırılmış Zaman: {recorded_time_str.split('T')[1]}... ")
     print(f"[PAYLOAD_GEN] ⚡ {ACTUAL_CONSUMPTION_KWH} yerine {REPORTED_CONSUMPTION_KWH} kWh raporluyor.")
     
     return {
-        "timestamp": recorded_time_str,
+        "timestamp": recorded_time_str,        # insan okunur ISO string (log/debug)
+        "cp_timestamp": recorded_epoch,        # epoch float (core time checks için)
         "reported_kwh": REPORTED_CONSUMPTION_KWH,
-        "transaction_id": 999 
+        "transaction_id": 999
     }
