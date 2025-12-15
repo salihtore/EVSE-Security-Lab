@@ -1,0 +1,181 @@
+{
+  "report_timestamp": "2025-12-16T01:10:00.007778",
+  "summary": {
+    "total_sessions": 1,
+    "active_sessions": 0,
+    "completed_sessions": 1,
+    "total_alerts": 2,
+    "critical_alerts": 2,
+    "total_attacks_executed": 1
+  },
+  "sessions": {
+    "active": [],
+    "history": [
+      {
+        "session_id": "272cef95-45a7-480b-ba3e-2cd7d81cb364",
+        "transaction_id": 1000,
+        "id_tag": "DEMO_USER",
+        "connector_id": 1,
+        "meter_start": 20403,
+        "meter_current": 20444,
+        "meter_stop": 20444,
+        "state": "completed",
+        "start_time": "2025-12-16T01:09:35.941876",
+        "end_time": "2025-12-16T01:10:00.006771",
+        "client_ip": "192.168.1.10",
+        "charging_power": 7400,
+        "message_count": 2,
+        "metadata": {
+          "hijacked_at": "2025-12-16T01:10:00.006771"
+        }
+      }
+    ]
+  },
+  "alerts": {
+    "all": [
+      {
+        "alert_id": "ALERT-000001",
+        "alert_type": "IP_CHANGE",
+        "level": "CRITICAL",
+        "timestamp": "2025-12-16T01:10:00.004543",
+        "transaction_id": 1000,
+        "id_tag": null,
+        "description": "IP address change detected for transaction 1000",
+        "details": {
+          "previous_ip": "192.168.1.10",
+          "current_ip": "203.0.113.50",
+          "message_type": "MeterValues"
+        },
+        "mitigated": false
+      },
+      {
+        "alert_id": "ALERT-000002",
+        "alert_type": "IP_CHANGE",
+        "level": "CRITICAL",
+        "timestamp": "2025-12-16T01:10:00.005589",
+        "transaction_id": 1000,
+        "id_tag": null,
+        "description": "IP address change detected for transaction 1000",
+        "details": {
+          "previous_ip": "192.168.1.10",
+          "current_ip": "203.0.113.50",
+          "message_type": "StopTransaction"
+        },
+        "mitigated": false
+      }
+    ],
+    "critical": [
+      {
+        "alert_id": "ALERT-000001",
+        "alert_type": "IP_CHANGE",
+        "level": "CRITICAL",
+        "timestamp": "2025-12-16T01:10:00.004543",
+        "transaction_id": 1000,
+        "id_tag": null,
+        "description": "IP address change detected for transaction 1000",
+        "details": {
+          "previous_ip": "192.168.1.10",
+          "current_ip": "203.0.113.50",
+          "message_type": "MeterValues"
+        },
+        "mitigated": false
+      },
+      {
+        "alert_id": "ALERT-000002",
+        "alert_type": "IP_CHANGE",
+        "level": "CRITICAL",
+        "timestamp": "2025-12-16T01:10:00.005589",
+        "transaction_id": 1000,
+        "id_tag": null,
+        "description": "IP address change detected for transaction 1000",
+        "details": {
+          "previous_ip": "192.168.1.10",
+          "current_ip": "203.0.113.50",
+          "message_type": "StopTransaction"
+        },
+        "mitigated": false
+      }
+    ],
+    "statistics": {
+      "total_alerts": 2,
+      "critical": 2,
+      "warning": 0,
+      "info": 0,
+      "by_type": {
+        "SESSION_HIJACK": 0,
+        "ID_TAG_MISMATCH": 0,
+        "IP_CHANGE": 2,
+        "CONNECTOR_MISMATCH": 0,
+        "REPLAY_ATTACK": 0,
+        "ABNORMAL_METER_VALUE": 0
+      }
+    }
+  },
+  "attacks": {
+    "executed": [
+      {
+        "timestamp": "2025-12-16T01:10:00.001536",
+        "attack_type": "session_hijack_ip",
+        "result": {
+          "success": true,
+          "attack_type": "session_hijack_ip",
+          "description": "Attacker takes over session from different IP address",
+          "messages_sent": [
+            {
+              "messageType": "MeterValues",
+              "uniqueId": "de42941e-0cfc-4f3d-a339-95122ce0db71",
+              "timestamp": "2025-12-16T01:09:57.986854",
+              "connectorId": 1,
+              "transactionId": 1000,
+              "meterValue": [
+                {
+                  "timestamp": "2025-12-16T01:09:57.986854",
+                  "sampledValue": [
+                    {
+                      "value": "20448",
+                      "unit": "Wh",
+                      "measurand": "Energy.Active.Import.Register"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "messageType": "StopTransaction",
+              "uniqueId": "b697ba8e-d54c-4512-8a1a-fb2273c32f96",
+              "timestamp": "2025-12-16T01:10:00.001536",
+              "transactionId": 1000,
+              "idTag": "DEMO_USER",
+              "meterStop": 20452,
+              "reason": "Remote"
+            }
+          ],
+          "attacker_ip": "203.0.113.50",
+          "original_ip": "192.168.1.10",
+          "transaction_id": 1000,
+          "actions": [
+            {
+              "timestamp": "2025-12-16T01:09:57.986854",
+              "action": "send_meter_values",
+              "details": {
+                "transaction_id": 1000,
+                "attacker_ip": "203.0.113.50",
+                "original_ip": "192.168.1.10",
+                "meter_value": 20448
+              }
+            },
+            {
+              "timestamp": "2025-12-16T01:10:00.001536",
+              "action": "send_stop_transaction",
+              "details": {
+                "transaction_id": 1000,
+                "attacker_ip": "203.0.113.50",
+                "reason": "Hijacked by attacker"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
