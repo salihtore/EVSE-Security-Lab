@@ -1,0 +1,45 @@
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
+import uvicorn
+
+app = FastAPI()
+
+history = {
+    "step": [],
+    "temp": [],
+    "temp_real": [],
+    "current": [],
+    "attack": [],
+    "anomaly": [],
+    "reason": []
+}
+
+class UpdatePayload(BaseModel):
+    step: int
+    temp: float
+    temp_real: float
+    current: float
+    attack: bool
+    anomaly: bool
+    reason: str = ""
+
+@app.post("/update")
+async def update(payload: UpdatePayload):
+    history["step"].append(payload.step)
+    history["temp"].append(payload.temp)
+    history["temp_real"].append(payload.temp_real)
+    history["current"].append(payload.current)
+    history["attack"].append(payload.attack)
+    history["anomaly"].append(payload.anomaly)
+    history["reason"].append(payload.reason)
+    return {"ok": True}
+
+@app.get("/latest")
+async def latest():
+    if not history["step"]:
+        return {}
+    
+    i = -1
+    return {
+        "step": histor
