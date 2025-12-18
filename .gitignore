@@ -1,0 +1,36 @@
+# PYTHON
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual Env
+.venv/
+venv/
+env/
+
+# FastAPI logs
+logs/
+*.log
+*.jsonl
+
+# Model files
+*.pkl
+*.joblib
+
+# NODE / REACT
+dashboard/node_modules/
+dashboard/.pnp/
+dashboard/.pnp.js
+
+# React build
+dashboard/build/
+dashboard/dist/
+
+# System
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

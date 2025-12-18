@@ -1,0 +1,106 @@
+[
+    {
+        "timestamp": 1766093928.7828522,
+        "alarm_type": "AUTH_BYPASS",
+        "cp_id": "unknown",
+        "event": {
+            "timestamp": 1766093928.7819133,
+            "cp_id": "unknown",
+            "message_type": "StartTransaction",
+            "idTag": "USER_HASAN_001",
+            "session_active": true,
+            "source": "CP"
+        }
+    },
+    {
+        "timestamp": 1766094451.1855633,
+        "alarm_type": "AUTH_BYPASS",
+        "cp_id": "unknown",
+        "event": {
+            "timestamp": 1766094451.1844451,
+            "cp_id": "unknown",
+            "message_type": "StartTransaction",
+            "idTag": "USER_HASAN_001",
+            "session_active": true,
+            "source": "CP"
+        }
+    },
+    {
+        "timestamp": 1766095246.7891855,
+        "alarm_type": "AUTH_BYPASS",
+        "cp_id": "unknown",
+        "event": {
+            "timestamp": 1766095246.7891855,
+            "cp_id": "unknown",
+            "message_type": "StartTransaction",
+            "idTag": "USER_HASAN_001",
+            "session_active": true,
+            "source": "CP"
+        }
+    },
+    {
+        "timestamp": 1766095389.664234,
+        "alarm_type": "AUTH_BYPASS",
+        "cp_id": "unknown",
+        "event": {
+            "timestamp": 1766095389.664234,
+            "cp_id": "unknown",
+            "message_type": "StartTransaction",
+            "idTag": "USER_HASAN_001",
+            "session_active": true,
+            "source": "CP"
+        }
+    },
+    {
+        "timestamp": 1766095561.8851514,
+        "alarm_type": "AUTH_BYPASS",
+        "cp_id": "unknown",
+        "event": {
+            "timestamp": 1766095561.8851514,
+            "cp_id": "unknown",
+            "message_type": "StartTransaction",
+            "idTag": "USER_HASAN_001",
+            "session_active": true,
+            "source": "CP"
+        }
+    },
+    {
+        "timestamp": 1766095865.1926963,
+        "alarm_type": "AUTH_BYPASS",
+        "cp_id": "unknown",
+        "event": {
+            "timestamp": 1766095865.1926963,
+            "cp_id": "unknown",
+            "message_type": "StartTransaction",
+            "idTag": "USER_HASAN_001",
+            "session_active": true,
+            "source": "CP"
+        }
+    },
+    {
+        "timestamp": 1766096043.8840864,
+        "alarm_type": "AUTH_BYPASS",
+        "cp_id": "unknown",
+        "event": {
+            "timestamp": 1766096043.8830872,
+            "cp_id": "unknown",
+            "message_type": "StartTransaction",
+            "idTag": "USER_HASAN_001",
+            "session_active": true,
+            "source": "CP"
+        }
+    },
+    {
+        "timestamp": 1766096103.8460026,
+        "alarm_type": "AUTH_BYPASS",
+        "cp_id": "unknown",
+        "event": {
+            "timestamp": 1766096103.8460026,
+            "cp_id": "unknown",
+            "message_type": "StartTransaction",
+            "idTag": "USER_HASAN_001",
+            "session_active": true,
+            "source": "CP"
+        }
+    }
+]
