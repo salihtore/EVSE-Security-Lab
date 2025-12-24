@@ -1,6 +1,9 @@
 import asyncio
 import logging
 import websockets
+from src.core.anomaly_engine import AnomalyEngine
+import time
+
 
 from ocpp.routing import on
 from ocpp.v16 import ChargePoint as Cp
@@ -12,6 +15,9 @@ from .event_bus import emit_event
 logging.basicConfig(level=logging.INFO)
 
 class CoreCSMS(Cp):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.anomaly_engine = AnomalyEngine()
 
     @on(Action.boot_notification)
     async def on_boot(self, charge_point_model, charge_point_vendor, **kwargs):
@@ -57,6 +63,15 @@ class CoreCSMS(Cp):
             session_active=True,
             source="CP"
         )
+        event = {
+            "cp_id": self.id,
+            "message_type": "StartTransaction",
+            "idTag": id_tag,
+            "timestamp": time.time(),
+        }
+
+        self.anomaly_engine.process(event)
+
 
         return result.StartTransaction(
             transaction_id=123,
@@ -93,11 +108,28 @@ class CoreCSMS(Cp):
         )
 
         return result.MeterValues()
+    
+    @on(Action.authorize)
+    async def on_authorize(self, id_tag, **kwargs):
+        logging.info(f"[CSMS] Authorize → CP={self.id}, idTag={id_tag}")
+
+        event = {
+            "cp_id": self.id,
+            "message_type": "Authorize",
+            "idTag": id_tag,
+            "timestamp": time.time(),
+        }
+
+        self.anomaly_engine.process(event)
+
+        return result.Authorize(id_tag_info={"status": "Accepted"})
+
 
 
 async def on_connect(connection):
     try:
-        path = connection.path
+        path = getattr(connection, "path", None) or connection.request.path
+
     except:
         path = "/unknown"
 

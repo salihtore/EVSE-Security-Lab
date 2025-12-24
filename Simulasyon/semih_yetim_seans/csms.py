@@ -10,7 +10,12 @@ from ocpp.v16 import ChargePoint as Cp
 from ocpp.v16.enums import Action, RegistrationStatus, ChargePointStatus
 from ocpp.v16 import call_result as cr_module
 
-from anomaly_detector import AnomalyDetector
+from .anomaly_detector import AnomalyDetector
+#  ANA MOTOR ALARM ENTEGRASYONU
+from src.core.scenario_adapter import ScenarioAdapter
+from src.core.event_pipeline import event_pipeline
+
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -48,6 +53,19 @@ detector = AnomalyDetector(timeout_sec=30)  # Kural-1 için 30 saniye eşiği
 
 
 class CSMSChargePoint(Cp):
+
+
+    def __init__(self, charge_point_id, connection):
+        super().__init__(charge_point_id, connection)
+        # Bu CP için adapter oluşturuyoruz (alarmı ana motora basacak)
+        self.adapter = ScenarioAdapter(
+            cp_id=charge_point_id,
+            scenario_name="semih_yetim_seans",
+            event_pipeline=event_pipeline
+        )      
+
+    
+
     @on(Action.boot_notification)
     async def on_boot_notification(self, charge_point_vendor, charge_point_model, **kwargs):
         logging.info(
@@ -92,22 +110,52 @@ class CSMSChargePoint(Cp):
         # Anomali Kontrolü
         anomaly_alarm = detector.check_for_anomaly(connector_id)
         if anomaly_alarm:
-            logging.error(f"🚨🚨 {anomaly_alarm} 🚨🚨")
+            # ✅ Alarmı ana motora gönder
+            self.adapter.raise_alarm(
+            alarm_type="ORPHAN_SESSION",
+            level="HIGH",
+            reason=anomaly_alarm,
+            evidence={
+                "connector_id": connector_id,
+                "source": "semih_yetim_seans",
+                "where": "status_notification"
+            }
+        )      
+
 
         return StatusNotificationConf()
 
     @on(Action.start_transaction)
     async def on_start_transaction(self, connector_id, id_tag, meter_start, timestamp, **kwargs):
-        # Normalde transaction_id'yi CSMS üretir, CP'ye geri yollarız
-        transaction_id = int(time.time())
 
-        detector.update_state(connector_id, session_active=True, plug_state=True)
+        transaction_id = int(time.time())
+        detector.update_state(
+        connector_id,
+        session_active=True,
+        plug_state=True
+        )
+
         self.display_panel()
 
+        self.adapter.emit_event(
+        name="StartTransaction",
+        payload={
+            "cp_id": self.id,
+            "connector_id": connector_id,
+            "idTag": id_tag,
+            "transactionId": transaction_id,
+        },
+        severity="INFO",
+        source="semih_yetim_seans"
+    )
+
+
+        # ✅ RETURN EN SON
         return StartTransactionConf(
-            transaction_id=transaction_id,
-            id_tag_info={"status": "Accepted"},
-        )
+        transaction_id=transaction_id,
+        id_tag_info={"status": "Accepted"},
+    )
+
 
     @on(Action.meter_values)
     async def on_meter_values(self, connector_id, meter_value, **kwargs):
@@ -121,7 +169,16 @@ class CSMSChargePoint(Cp):
         # Kural-3 Kontrolü: Meter değerleri artarken fiş çekiliyse alarm
         anomaly_alarm = detector.check_for_anomaly(connector_id)
         if anomaly_alarm:
-            logging.error(f"🚨🚨 {anomaly_alarm} 🚨🚨")
+            self.adapter.raise_alarm(
+            alarm_type="ORPHAN_SESSION",
+            level="HIGH",
+            reason=anomaly_alarm,
+            evidence={
+                "connector_id": connector_id,
+                "source": "semih_yetim_seans",
+                "where": "meter_values"
+            }
+        )
 
         return MeterValuesConf()
 
@@ -140,6 +197,15 @@ class CSMSChargePoint(Cp):
 
         logging.info(f"✅ StopTx Alındı: CP={self.id}, Transaction ID={transaction_id}")
         self.display_panel()
+        self.adapter.emit_event(
+        name="StopTransaction",
+        payload={
+            "cp_id": self.id,
+            "transactionId": transaction_id,
+         },
+        severity="INFO",
+        source="semih_yetim_seans"
+        )
 
         return StopTransactionConf()
 

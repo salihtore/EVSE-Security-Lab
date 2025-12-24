@@ -19,13 +19,13 @@ logs/
 *.joblib
 
 # NODE / REACT
-dashboard/node_modules/
-dashboard/.pnp/
-dashboard/.pnp.js
+ui/dashboard/node_modules/
+ui/dashboard/.pnp/
+ui/dashboard/.pnp.js
 
 # React build
-dashboard/build/
-dashboard/dist/
+ui/dashboard/build/
+ui/dashboard/dist/
 
 # System
 .DS_Store

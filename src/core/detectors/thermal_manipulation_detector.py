@@ -1,22 +1,23 @@
 from typing import Dict, Optional
 
-
 class ThermalManipulationDetector:
-    """
-    Payload içinde 'temperature_override' benzeri alanlar varsa
-    sensör manipülasyonu olarak işaretler.
-    """
     anomaly_type = "THERMAL_MANIPULATION"
 
     def process(self, event: Dict) -> Optional[Dict]:
-        extra = event.get("extra") or {}
+        # 🔴 PAYLOAD DEĞİL, DATA
+        data = event.get("data") or {}
 
-        if isinstance(extra, dict) and extra.get("temperature_override") is True:
+        if data.get("temperature_override") is True:
             return {
                 "anomaly_type": self.anomaly_type,
-                "cp_id": event["cp_id"],
-                "severity": "high",
-                "details": {"reason": "Temperature override flag set"},
+                "cp_id": event.get("cp_id"),
+                "severity": "HIGH",
+                "details": {
+                    "reason": data.get("reason"),
+                    "temperature": data.get("temperature"),
+                    "transaction_id": data.get("transaction_id"),
+                    "scenario": event.get("scenario"),
+                },
             }
 
         return None

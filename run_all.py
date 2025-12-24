@@ -1,7 +1,8 @@
 import argparse
-import importlib
+# import importlib // already imported in scenario_runner
 import sys
 import os
+from src.core.scenario_runner import ScenarioRunner
 
 def list_scenarios():
     """
@@ -50,35 +51,39 @@ def main():
         print("\nSenaryo klasörünü 'Simulasyon/<senaryo_adı>/' şeklinde eklemeniz gerekir.")
         sys.exit(1)
 
-    # Senaryonun scenario.py dosyasını import et
-    module_path = f"Simulasyon.{args.scenario}.scenario"
+    # Senaryonun scenario.py dosyasını import et // already done in scenario_runner
+    # module_path = f"Simulasyon.{args.scenario}.scenario"
 
-    try:
-        scenario_module = importlib.import_module(module_path)
-    except Exception as e:
-        print("\n❌ Senaryo import edilirken hata oluştu!")
-        print("Modül yolu:", module_path)
-        print("Hata:", e)
-        sys.exit(1)
+    # try:
+    #     scenario_module = importlib.import_module(module_path)
+    # except Exception as e:
+    #     print("\n❌ Senaryo import edilirken hata oluştu!")
+    #     print("Modül yolu:", module_path)
+    #     print("Hata:", e)
+    #     sys.exit(1)
 
-    # Çalıştırılacak fonksiyon mevcut mu?
-    if not hasattr(scenario_module, "run_scenario"):
-        print(f"\n❌ HATA: {args.scenario}/scenario.py içinde 'run_scenario' fonksiyonu bulunamadı!")
-        print("Lütfen dosyada aşağıdaki fonksiyon tanımlı olsun:")
-        print("\n   def run_scenario(mode):\n")
-        sys.exit(1)
+    # Çalıştırılacak fonksiyon mevcut mu? // already done in scenario_runner
+    # if not hasattr(scenario_module, "run_scenario"):
+    #     print(f"\n❌ HATA: {args.scenario}/scenario.py içinde 'run_scenario' fonksiyonu bulunamadı!")
+    #     print("Lütfen dosyada aşağıdaki fonksiyon tanımlı olsun:")
+    #     print("\n   def run_scenario(mode):\n")
+    #     sys.exit(1)
 
-    print("\n🚀 Senaryo başlatılıyor...")
-    print(f"👉 Senaryo: {args.scenario}")
-    print(f"👉 Mod: {args.mode}\n")
+    # print("\n🚀 Senaryo başlatılıyor...")
+    # print(f"👉 Senaryo: {args.scenario}")
+    # print(f"👉 Mod: {args.mode}\n")
 
     # Senaryoyu çalıştır
-    try:
-        scenario_module.run_scenario(args.mode)
-    except Exception as e:
-        print("\n❌ Senaryo çalıştırılırken hata oluştu!")
-        print("Hata:", e)
-        sys.exit(1)
+
+    ScenarioRunner.run(args.scenario, args.mode)
+
+    # Alternatif hata yakalama // already done in scenario_runner
+    # try:
+    #     ScenarioRunner.run(args.scenario, args.mode)
+    # except Exception as e:
+    #     print("\n❌ Senaryo çalıştırılırken hata oluştu!")
+    #     print("Hata:", e)
+    #     sys.exit(1)
 
 
 if __name__ == "__main__":

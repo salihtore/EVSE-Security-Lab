@@ -24,14 +24,14 @@ class AuthBypassDetector:
         if msg == "StartTransaction":
             last_auth = self.last_authorize.get(cp)
             if last_auth is None or (ts - last_auth) > self.max_auth_age:
-                return {
+               return {
                     "anomaly_type": self.anomaly_type,
                     "cp_id": cp,
-                    "severity": "high",
+                    "severity": "HIGH",
                     "details": {
                         "reason": "StartTransaction without fresh Authorize",
                         "last_authorize": last_auth,
-                    },
-                }
-
+            },
+            "timestamp": ts
+            }
         return None

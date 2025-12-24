@@ -1,3 +1,4 @@
+# src/api/routes/security.py
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 import json
@@ -6,7 +7,7 @@ import os
 
 router = APIRouter(prefix="/security", tags=["Security"])
 
-# 🔥 Alarm dosyasını buraya FIXLEDİK
+#  Alarm dosyasını buraya FIXLEDİK
 SEC_FILE = "logs/alarms.jsonl"
 
 # Dosya yoksa oluştur
@@ -31,8 +32,8 @@ def live():
 
             while True:
                 line = f.readline()
-                if line:
-                    yield f"data: {line}\n\n"
+                if line.strip():
+                    yield f"data: {line.strip()}\n\n"
                 else:
                     time.sleep(0.2)
 

@@ -2,48 +2,58 @@
 import asyncio
 import time
 import random
+from src.core.scenario_adapter import ScenarioAdapter
 
 # Core sistem fonksiyonları
-from core.core_cp import send_message_to_core
+from Simulasyon.core.forward_to_real_core import forward_event
 
 CP_ID = "CP_BERAT"
-SCENARIO_NAME = "TimeDesync"
+SCENARIO_NAME = "berat_time_desync"
 
 
-async def send_meter_values(cp_id: str, count: int, mode: str, get_manipulated_data=None):
-    """
-    MeterValue gönderir.
-    NORMAL mod: sabit 50.0 kWh
-    ATTACK mod: manipüle edilmiş payload
-    """
-
+async def send_meter_values(
+    cp_id: str,
+    count: int,
+    mode: str,
+    adapter: ScenarioAdapter,
+    get_manipulated_data=None
+):
     for i in range(1, count + 1):
         await asyncio.sleep(1)
 
         if mode.upper() == "ATTACK" and get_manipulated_data:
             payload = get_manipulated_data(cp_id)
-            print(f"[CP_{cp_id}] 💣 Anomali MeterValue gönderildi ({i}/{count}).")
+            print(f"[CP_{cp_id}] 💣 Anomali MeterValues gönderildi ({i}/{count}).")
         else:
             payload = {
-                "timestamp": time.time(),
-                "senaryo": SCENARIO_NAME,
-                "cp_id": cp_id,
-                "message_type": "MeterValue",
-                "value": 50.0,
-                "source": "CP"
+                "transactionId": 42,
+                "cp_timestamp": time.time(),
+                "csms_time": time.time(),
+                "meterValue": [{"sampledValue": [{"value": "50"}]}],
+                "note": "NORMAL_METERVALUES"
             }
-            print(f"[CP_{cp_id}] 🟢 Normal MeterValue gönderildi ({i}/{count}).")
+            print(f"[CP_{cp_id}] 🟢 Normal MeterValues gönderildi ({i}/{count}).")
 
-        await send_message_to_core(payload)
+        # KRİTİK: forward_event YOK, adapter.emit VAR
+        alarms = adapter.emit(message_type="MeterValues", payload=payload)
+        if alarms:
+            print(f"[CP_{cp_id}] 🚨 Üretilen alarmlar: {alarms}")
 
 
-async def cp_event_flow(mode="NORMAL", get_manipulated_data=None):
-    """
-    CP Akışı:
-    1) StartTransaction → artık core tarafından gönderiliyor
-    2) 3 adet MeterValue
-    """
+    forward_event(payload)
+
+
+async def cp_event_flow(mode="NORMAL", adapter: ScenarioAdapter = None, get_manipulated_data=None):
+    if adapter is None:
+        adapter = ScenarioAdapter(cp_id=CP_ID, scenario_name=SCENARIO_NAME)
 
     print(f"\n[CP_{CP_ID}] 📡 Senaryo akışı başlatılıyor...")
-    await send_meter_values(CP_ID, 3, mode, get_manipulated_data)
+    await send_meter_values(CP_ID, 3, mode, adapter, get_manipulated_data)
     print(f"[CP_{CP_ID}] ✅ Senaryo Akışı Tamamlandı.")
+
+
+
+if __name__ == "__main__":
+    asyncio.run(cp_event_flow(mode="NORMAL"))
+
+    

@@ -1,3 +1,4 @@
+# src/api/routes/events.py
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from src.api.services.tail_reader import tail

@@ -1,16 +1,17 @@
 # Simulasyon/core/event_bus.py
+
+from src.core.anomaly_engine import AnomalyEngine
 import time
-from .security_engine import handle_event
 
-def emit_event(**data):
-    """
-    Tüm senaryoların çağıracağı fonksiyon.
-    Aldığı key/value çiftlerini bir event'e dönüştürür ve ana motora iletir.
-    """
-    event = {
-        "timestamp": time.time(),
-        **data
-    }
+_engine = AnomalyEngine()
 
-    # Ana motora gönder
-    handle_event(event)
+def emit_event(**event):
+    """
+    Tüm CP / senaryo event’leri buradan geçer
+    """
+    # timestamp yoksa ekle
+    if "timestamp" not in event:
+        event["timestamp"] = time.time()
+
+    # 🔴 ASIL EKSİK OLAN YER BURASI
+    _engine.process(event)

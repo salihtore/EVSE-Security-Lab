@@ -1,15 +1,15 @@
-# Simulasyon/core/security_engine.py
 import json
 import os
 import time
 from collections import defaultdict
+from Simulasyon.core.sse_bus import publish_alarm_threadsafe
+
 
 # =====================================================
 #  ALARM LOG dosyası
 # =====================================================
 
 LOG_PATH = "alarms.json"
-
 def log_alarm_json(alarm_type, cp_id, event):
     """
     Oluşan tüm alarmları JSON dosyasına kaydeder.
@@ -52,11 +52,21 @@ state = defaultdict(dict)
 # =====================================================
 
 def raise_alarm(alarm_type, cp_id, event):
-    print(f"\n🚨 ALARM: {alarm_type} @ {cp_id}")
-    print(f"Event: {event}\n")
+    print("🔥 RAISE_ALARM ÇAĞRILDI:", alarm_type, cp_id)
 
-    # JSON log’a kaydet
+    alarm = {
+        "id": f"{alarm_type}_{cp_id}_{int(time.time())}",
+        "type": alarm_type,
+        "level": "HIGH",
+        "message": event.get("reason", alarm_type),
+        "cpId": cp_id,
+        "time": time.strftime("%H:%M:%S"),
+    }
+
     log_alarm_json(alarm_type, cp_id, event)
+
+    publish_alarm_threadsafe(alarm)
+
 
 
 # =====================================================
@@ -64,6 +74,7 @@ def raise_alarm(alarm_type, cp_id, event):
 # =====================================================
 
 def handle_event(event):
+    print("📩 HANDLE_EVENT:", event.get("message_type"), event.get("cp_id"))
     """
     event_bus.emit_event() tarafından çağrılır.
     Tüm event türleri buradan geçer.

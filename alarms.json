@@ -1,0 +1,119 @@
+[
+    {
+        "timestamp": 1766063800.044202,
+        "alarm_type": "AUTH_BYPASS",
+        "cp_id": "unknown",
+        "event": {
+            "timestamp": 1766063800.044202,
+            "cp_id": "unknown",
+            "message_type": "StartTransaction",
+            "idTag": "SEMIH_TAG",
+            "session_active": true,
+            "source": "CP"
+        }
+    },
+    {
+        "timestamp": 1766063980.6203094,
+        "alarm_type": "AUTH_BYPASS",
+        "cp_id": "unknown",
+        "event": {
+            "timestamp": 1766063980.6203094,
+            "cp_id": "unknown",
+            "message_type": "StartTransaction",
+            "idTag": "SEMIH_TAG",
+            "session_active": true,
+            "source": "CP"
+        }
+    },
+    {
+        "timestamp": 1766064210.4800665,
+        "alarm_type": "AUTH_BYPASS",
+        "cp_id": "CP_SEMIH",
+        "event": {
+            "timestamp": 1766064210.4800665,
+            "cp_id": "CP_SEMIH",
+            "message_type": "StartTransaction",
+            "idTag": "SEMIH_TAG",
+            "session_active": true,
+            "source": "CP"
+        }
+    },
+    {
+        "timestamp": 1766067559.6587443,
+        "alarm_type": "AUTH_BYPASS",
+        "cp_id": "CP_OMER_FLOOD",
+        "event": {
+            "timestamp": 1766067559.6558046,
+            "cp_id": "CP_OMER_FLOOD",
+            "message_type": "StartTransaction",
+            "idTag": "TAG_ATTACKER",
+            "session_active": true,
+            "source": "CP"
+        }
+    },
+    {
+        "timestamp": 1766067562.866793,
+        "alarm_type": "AUTH_BYPASS",
+        "cp_id": "CP_OMER_FLOOD",
+        "event": {
+            "timestamp": 1766067562.866793,
+            "cp_id": "CP_OMER_FLOOD",
+            "message_type": "StartTransaction",
+            "idTag": "TAG_ATTACKER",
+            "session_active": true,
+            "source": "CP"
+        }
+    },
+    {
+        "timestamp": 1766067565.9683104,
+        "alarm_type": "AUTH_BYPASS",
+        "cp_id": "CP_OMER_FLOOD",
+        "event": {
+            "timestamp": 1766067565.9683104,
+            "cp_id": "CP_OMER_FLOOD",
+            "message_type": "StartTransaction",
+            "idTag": "TAG_ATTACKER",
+            "session_active": true,
+            "source": "CP"
+        }
+    },
+    {
+        "timestamp": 1766067611.4645247,
+        "alarm_type": "AUTH_BYPASS",
+        "cp_id": "CP_OMER_FLOOD",
+        "event": {
+            "timestamp": 1766067611.4645247,
+            "cp_id": "CP_OMER_FLOOD",
+            "message_type": "StartTransaction",
+            "idTag": "TAG_ATTACKER",
+            "session_active": true,
+            "source": "CP"
+        }
+    },
+    {
+        "timestamp": 1766067614.566559,
+        "alarm_type": "AUTH_BYPASS",
+        "cp_id": "CP_OMER_FLOOD",
+        "event": {
+            "timestamp": 1766067614.566559,
+            "cp_id": "CP_OMER_FLOOD",
+            "message_type": "StartTransaction",
+            "idTag": "TAG_ATTACKER",
+            "session_active": true,
+            "source": "CP"
+        }
+    },
+    {
+        "timestamp": 1766067617.6773322,
+        "alarm_type": "AUTH_BYPASS",
+        "cp_id": "CP_OMER_FLOOD",
+        "event": {
+            "timestamp": 1766067617.6773322,
+            "cp_id": "CP_OMER_FLOOD",
+            "message_type": "StartTransaction",
+            "idTag": "TAG_ATTACKER",
+            "session_active": true,
+            "source": "CP"
+        }
+    }
+]
