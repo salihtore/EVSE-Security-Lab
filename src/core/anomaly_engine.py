@@ -15,7 +15,7 @@ from src.defense.policy_engine import PolicyEngine
 from src.core.event_pipeline import event_pipeline
 from src.utils.logger import logger
 
-from src.core.ml_engine import MLDetector
+# from src.core.ml_engine import MLDetector
 
 
 LOG_DIR = "logs"
@@ -40,16 +40,16 @@ class AnomalyEngine:
             ThermalManipulationDetector(),
         ]
 
-        # ➕ ML (opsiyonel)
-        self.ml_detector = None
-        try:
-            ml = MLDetector()
-            if hasattr(ml, "is_ready") and ml.is_ready():
-                self.ml_detector = ml
-            else:
-                logger.warning("[AnomalyEngine] ML hazır değil, rule-based devam")
-        except Exception as exc:
-            logger.warning(f"[AnomalyEngine] ML devre dışı: {exc}")
+        # # ➕ ML (opsiyonel)
+        # self.ml_detector = None
+        # try:
+        #     ml = MLDetector()
+        #     if hasattr(ml, "is_ready") and ml.is_ready():
+        #         self.ml_detector = ml
+        #     else:
+        #         logger.warning("[AnomalyEngine] ML hazır değil, rule-based devam")
+        # except Exception as exc:
+        #     logger.warning(f"[AnomalyEngine] ML devre dışı: {exc}")
 
         os.makedirs(LOG_DIR, exist_ok=True)
 
@@ -90,10 +90,10 @@ class AnomalyEngine:
             )
 
         # ML inference (opsiyonel)
-        if self.ml_detector:
-            try:
-                self.ml_detector.process(event)
-            except Exception as exc:
-                logger.error(f"[AnomalyEngine] ML inference hatası: {exc}")
+        # if self.ml_detector:
+        #     try:
+        #         self.ml_detector.process(event)
+        #     except Exception as exc:
+        #         logger.error(f"[AnomalyEngine] ML inference hatası: {exc}")
 
-        return alarms
+        # return alarms
