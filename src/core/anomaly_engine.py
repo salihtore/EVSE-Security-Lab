@@ -1,6 +1,4 @@
-#anomali_engine.py
 from typing import Dict, List
-import json
 import os
 
 from src.core.detectors.auth_bypass_detector import AuthBypassDetector
@@ -15,21 +13,27 @@ from src.defense.policy_engine import PolicyEngine
 from src.core.event_pipeline import event_pipeline
 from src.utils.logger import logger
 
-# from src.core.ml_engine import MLDetector
+
+# ML STATE (opsiyonel – yoksa sistem çalışmaya devam eder)
+try:
+    from src.core.ml.state_buffer import StateBuffer
+except Exception:
+    StateBuffer = None
 
 
 LOG_DIR = "logs"
 
+
 class AnomalyEngine:
     """
-    Rule-based + ML anomaly engine.
-    EVENT alır → ALARM üretir.
+    Rule-based anomaly detection engine.
+    ML entegrasyonuna hazırdır fakat ML karar vermez.
     """
 
     def __init__(self) -> None:
         self.policy = PolicyEngine()
 
-        # 🔒 RULE-BASED DETECTORS
+        # Rule-based detector'lar
         self.detectors = [
             AuthBypassDetector(),
             SemihOrphanSessionDetector(),
@@ -40,16 +44,13 @@ class AnomalyEngine:
             ThermalManipulationDetector(),
         ]
 
-        # # ➕ ML (opsiyonel)
-        # self.ml_detector = None
-        # try:
-        #     ml = MLDetector()
-        #     if hasattr(ml, "is_ready") and ml.is_ready():
-        #         self.ml_detector = ml
-        #     else:
-        #         logger.warning("[AnomalyEngine] ML hazır değil, rule-based devam")
-        # except Exception as exc:
-        #     logger.warning(f"[AnomalyEngine] ML devre dışı: {exc}")
+        # ML için state altyapısı (pasif)
+        self.state_buffer = None
+        if StateBuffer:
+            try:
+                self.state_buffer = StateBuffer()
+            except Exception:
+                self.state_buffer = None
 
         os.makedirs(LOG_DIR, exist_ok=True)
 
@@ -59,6 +60,14 @@ class AnomalyEngine:
     def process(self, event: Dict) -> List[Dict]:
         alarms: List[Dict] = []
 
+        # ML state update (opsiyonel, güvenli)
+        if self.state_buffer:
+            try:
+                self.state_buffer.update(event)
+            except Exception:
+                pass
+
+        # Rule-based detection
         for detector in self.detectors:
             try:
                 alarm = detector.process(event)
@@ -69,31 +78,32 @@ class AnomalyEngine:
                 continue
 
             if alarm:
+                # ML alanı bugünden sabitleniyor
+                alarm["ml_score"] = None
+
                 alarms.append(alarm)
 
-                # 2️⃣ Defense policy
+                # Defense policy
                 self.policy.handle_alarm(alarm)
 
-                # 3️⃣ UI'ya giden security event
+                # UI'ya giden security event
                 sev = str(alarm.get("severity", "LOW")).upper()
                 security_event = event_pipeline.build_security_event(
                     cp_id=alarm["cp_id"],
                     anomaly_type=alarm["anomaly_type"],
                     severity=sev,
-                    details=alarm["details"],
+                    details={
+                        **alarm["details"],
+                        "ml_score": alarm.get("ml_score"),
+                    },
                 )
+
                 event_pipeline.emit_event(security_event)
 
+        # Log output
         for alarm in alarms:
             logger.warning(
                 f"🚨 ALARM ({alarm['anomaly_type']}) @ {alarm['cp_id']} → {alarm['details']}"
             )
 
-        # ML inference (opsiyonel)
-        # if self.ml_detector:
-        #     try:
-        #         self.ml_detector.process(event)
-        #     except Exception as exc:
-        #         logger.error(f"[AnomalyEngine] ML inference hatası: {exc}")
-
-        # return alarms
+        return alarms
