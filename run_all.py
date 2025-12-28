@@ -5,7 +5,7 @@ import os
 from src.core.scenario_runner import ScenarioRunner
 
 def list_scenarios():
-    """
+    """ 
     Simulasyon/ klasöründeki mevcut senaryoları otomatik listeler.
     core/ klasörü ve __pycache__ filtrelenir.
     """
