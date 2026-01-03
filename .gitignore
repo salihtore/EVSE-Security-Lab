@@ -98,3 +98,4 @@ python*.exe
 # Walrus Bridge
 .env
 src/core/walrus_service/node_modules/
+.walrus_config
