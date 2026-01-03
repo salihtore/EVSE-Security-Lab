@@ -1,74 +1,57 @@
 import asyncio
 import logging
 import websockets
-# charge_point.py dosyanızdan SimulatedChargePoint sınıfını import eder
-from .charge_point import SimulatedChargePoint 
+from src.core.scenario_adapter import ScenarioAdapter
+from .charge_point import SimulatedChargePoint
 
 logging.basicConfig(level=logging.INFO)
-CP_ID = "CP_MAHMUT" 
-CSMS_URI = f"ws://127.0.0.1:9000/{CP_ID}"
+logger = logging.getLogger(__name__)
 
-# -----------------------------------------------------------
-# NORMAL MOD
-# -----------------------------------------------------------
-
-async def normal_flow(cp: SimulatedChargePoint):
-    """ Normal şarj seansı: 5 döngüde 0.5 kWh raporlanır. """
-    logging.info(">> NORMAL AKIŞ BAŞLADI (Gerçek Raporlama)")
+async def attack_flow(cp: SimulatedChargePoint, adapter: ScenarioAdapter):
+    logger.error("🚨 [MAHMUT] ENERJİ MANIPULASYONU SALDIRISI BAŞLATILIYOR")
+    
     await cp.send_boot_notification()
+    adapter.emit("BootNotification", {"model": "EnergyCheat-X", "vendor": "MahmutSec"})
+    await asyncio.sleep(1)
+    
     await cp.start_charging()
+    adapter.emit("StartTransaction", {"idTag": cp.id_tag, "transactionId": cp.transaction_id})
+    await asyncio.sleep(1)
     
-    for i in range(5):
-        await cp.simulate_meter_values_normal(step_kwh=0.1) 
-        logging.info(f"   [Normal] Sayaç Raporu #{i+1}: {cp.meter_value:.2f} kWh")
-        await asyncio.sleep(2)
-        
-    await cp.stop_charging()
-    logging.info(f">> NORMAL AKIŞ SONLANDI. TOPLAM RAPORLANAN: {cp.meter_value:.2f} kWh")
-
-async def run_normal():
-    async with websockets.connect(CSMS_URI, subprotocols=["ocpp1.6"]) as ws:
-        cp = SimulatedChargePoint(CP_ID, ws)
-        await asyncio.gather(
-            cp.start(),
-            normal_flow(cp),
-        )
-
-# -----------------------------------------------------------
-# ATTACK MODU
-# -----------------------------------------------------------
-
-async def attack_flow(cp: SimulatedChargePoint):
-    """ Enerji Manipülasyonu Saldırısı: Gerçek 2.5 kWh harcanır, 0.5 kWh raporlanır. """
-    logging.error(">> SALDIRI AKIŞI BAŞLIYOR: ENERJİ MANİPÜLASYONU...")
-    await cp.send_boot_notification()
-    await cp.start_charging()
+    # 🕵️ Saldırı Fazı
+    logger.error("🔥 Gerçek harcanan 2.5 kWh, ama raporlanan 0.5 kWh!")
     
-    real_consumption_tracker = 0.0
-    
-    for i in range(5):
-        # Saldırı: Gerçek Tüketim (0.5 kWh) > Raporlanan Tüketim (0.1 kWh)
-        await cp.simulate_meter_values_attack(real_step_kwh=0.5, reported_step_kwh=0.1) 
-        real_consumption_tracker += 0.5 
-        logging.error(f"   [SALDIRI RAPORU] Raporlanan: {cp.meter_value:.2f} kWh (Gerçek Harcanan: {real_consumption_tracker:.2f} kWh)")
-        await asyncio.sleep(2)
+    # Manuel alarm kaldırıldı - EnergyMismatchDetector tarafından yakalanacak
+    # adapter.emit_alarm(...)
+
+    for i in range(3):
+        await cp.simulate_meter_values_attack(real_step_kwh=0.5, reported_step_kwh=0.1)
+        adapter.emit("MeterValues", {"transactionId": cp.transaction_id, "meterValue": str(cp.meter_value)})
+        await asyncio.sleep(1)
 
     await cp.stop_charging()
-    logging.error(f">> SALDIRI SONLANDI. CSMS'e TOPLAM RAPOR: {cp.meter_value:.2f} kWh (Gerçekte {real_consumption_tracker:.2f} kWh harcandı.)")
+    adapter.emit("StopTransaction", {"transactionId": cp.transaction_id, "reason": "Local"})
+    logger.info("🚨 [MAHMUT] SENARYO TAMAMLANDI")
 
+async def run_attack_with_adapter(adapter):
+    uri = f"ws://127.0.0.1:9000/{adapter.cp_id}"
+    try:
+        async with websockets.connect(uri, subprotocols=["ocpp1.6"]) as ws:
+            cp = SimulatedChargePoint(adapter.cp_id, ws)
+            cp_task = asyncio.create_task(cp.start())
+            await attack_flow(cp, adapter)
+            await asyncio.sleep(1)
+            cp_task.cancel()
+    except Exception as e:
+        logger.error(f"❌ Bağlantı hatası: {e}")
 
-async def run_attack():
-    async with websockets.connect(CSMS_URI, subprotocols=["ocpp1.6"]) as ws:
-        cp = SimulatedChargePoint(CP_ID, ws)
-        await asyncio.gather(
-            cp.start(),
-            attack_flow(cp),
-        )
-
-def run_scenario(mode: str = "normal"):
+def run_scenario(mode: str = "attack", adapter: ScenarioAdapter = None):
     if mode == "attack":
-        logging.error("A SALDIRI MODU BAŞLIYOR...")
-        asyncio.run(run_attack())
+        asyncio.run(run_attack_with_adapter(adapter))
     else:
-        logging.info(" NORMAL MOD BAŞLIYOR...")
-        asyncio.run(run_normal())
+        logger.info("Normal mod bu senaryo için tasarlanmadı.")
+
+if __name__ == "__main__":
+    from src.core.scenario_adapter import ScenarioAdapter
+    adapter = ScenarioAdapter("CP_MAHMUT", "mahmut_attack_automation")
+    run_scenario("attack", adapter)

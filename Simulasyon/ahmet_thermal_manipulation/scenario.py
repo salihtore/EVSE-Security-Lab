@@ -71,32 +71,35 @@ async def run_scenario(mode, adapter):
                 connector_id=1, error_code="NoError", status="Charging"
             ))
 
-            # 4) NORMAL METER VALUES
+            # 4) NORMAL METER VALUES (SPOOFING BAŞLIYOR)
+            print(">> MeterValues: Yüksek Akım (50A) ama Sabit Sıcaklık (35°C) gönderiliyor...")
             for i in range(3):
                 await asyncio.sleep(1.5)
-                print(f">> MeterValue {i + 1} gönderiliyor...")
                 await cp.call(call.MeterValues(
                     connector_id=1,
                     transaction_id=transaction_id,
                     meter_value=[{
                         "timestamp": datetime.utcnow().isoformat(),
                         "sampled_value": [
-                            {"value": str(10 + i * 2), "unit": "Wh"}
+                            {"value": str(50 + i), "unit": "A", "measurand": "Current.Import"}, # Yüksek Akım
+                            # Enerji artışı da olmalı ama şimdilik odak noktası akım
+                            {"value": str(10 + i * 2), "unit": "Wh", "measurand": "Energy.Active.Import.Register"} 
                         ]
                     }]
                 ))
 
             # 🔥 ANOMALİ ANI
-            print("\n!!! ANOMALİ: Kamera/LiDAR Uyuşmazlığı TESPİT EDİLDİ !!!\n")
+            print("\n!!! ANOMALİ: Fiziksel Tutarsızlık (Yüksek Akım - Düşük Isı) !!!\n")
 
             # ✅ Pipeline’a event düşür: detector bunu ANOMALY'e çevirecek
             adapter.emit_alarm(
                 anomaly_type="THERMAL_MANIPULATION",
                 severity="HIGH",
                 details={
-                "reason": "Thermal sensor override detected",
-                    "temperature": 96,
-                    "override": True,
+                "reason": "Physical Correlation Error: High Current (50A) vs Low Temp (35C)",
+                    "temperature": 35,
+                    "current": 50,
+                    "override": True, # Spoofed
                     "transaction_id": transaction_id,
                     "scenario": SCENARIO_NAME,
                 },

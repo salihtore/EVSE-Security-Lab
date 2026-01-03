@@ -1,3 +1,4 @@
+#build_dataset.py
 """
 EVSE Security Lab - Dataset Builder (Sentetik Veri Uretici)
 Bu script, 9 farkli anomali senaryosu ve normal sarj akisi icin stabil ve tekrar uretilebilir bir ML egitim datasi olusturur. 

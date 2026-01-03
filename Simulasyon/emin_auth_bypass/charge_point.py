@@ -1,11 +1,11 @@
 import time
+import logging
 from ocpp.v16 import ChargePoint as Cp
 from ocpp.v16 import call as call_module
 from ocpp.v16.enums import ChargePointStatus
 
-# 🔥 ANA MOTOR BAĞLANTISI
-from Simulasyon.core.forward_to_real_core import forward_event
-
+# Configure logging
+logging.basicConfig(filename='emin_debug_internal.log', level=logging.DEBUG, filemode='w')
 
 def _resolve_req(name: str):
     cls = getattr(call_module, f"{name}Payload", None)
@@ -34,7 +34,6 @@ class SimulatedChargePoint(Cp):
 
     ATTACK:
         Boot -> (Authorize YOK) -> StartTx -> MeterValues -> StopTx
-        + AUTH_BYPASS event ana motora gönderilir
     """
 
     def __init__(self, charge_point_id: str, connection):
@@ -44,27 +43,6 @@ class SimulatedChargePoint(Cp):
         self.session_active = False
         self.transaction_id = None
         self.meter_value = 0.0
-        self.attack_mode = False
-
-    # =====================================================
-    #  ANA MOTORA AUTH BYPASS EVENT
-    # =====================================================
-
-    def emin_auth_bypass_event(self):
-        payload = {
-            "timestamp": time.time(),
-            "scenario": "AuthBypass",
-            "cp_id": self.id,
-            "message_type": "StartTransaction",
-            "note": "AUTH_BYPASS_ATTACK_MARKER",
-            "details": {
-                "id_tag": "ID_USER1",
-                "authorize_skipped": True
-            }
-        }
-
-        print(f"[CP_{self.id}] 🚨 AUTH BYPASS event ana motora gönderildi")
-        forward_event(payload)
 
     # =====================================================
     #  OCPP AKIŞLARI
@@ -86,36 +64,36 @@ class SimulatedChargePoint(Cp):
         await self.call(req)
         self.current_status = status
 
-    async def send_authorize(self):
-        if self.attack_mode:
-            print("❌ SALDIRI: Authorize isteği BİLEREK gönderilmiyor!")
-            return
-
+    async def authorize(self, id_tag: str):
         req = AuthorizeReq(
-            id_tag="ID_USER1",
+            id_tag=id_tag,
         )
         await self.call(req)
 
-    async def start_charging(self):
+    async def start_charging(self, id_tag="ID_USER1"):
+        logging.debug(f"start_charging called with id_tag={id_tag}")
         if self.session_active:
+            logging.debug("Session is already active. Ignoring.")
             return
 
         self.transaction_id = int(time.time())
 
-        # 🔥 KRİTİK NOKTA
-        if self.attack_mode:
-            # Authorize atlandı → ana motora event
-            self.emin_auth_bypass_event()
-        else:
-            await self.send_authorize()
+        # Not: Authorize işlemi senaryodan çağrılmalı, burada otomatik yapılmamalı.
+        # Böylece bypass durumu senaryoda kontrol edilebilir.
 
         req = StartTransactionReq(
             connector_id=self.connector_id,
-            id_tag="ID_USER1",
+            id_tag=id_tag,
             meter_start=int(self.meter_value * 100),
             timestamp=time.strftime("%Y-%m-%dT%H:%M:%S") + "Z",
         )
-        await self.call(req)
+        logging.debug(f"Sending StartTransactionReq: {req}")
+        try:
+            resp = await self.call(req)
+            logging.debug(f"Received StartTransactionConf: {resp}")
+        except Exception as e:
+            logging.error(f"StartTransaction failed: {e}")
+            raise
 
         self.session_active = True
         await self.send_status_notification(ChargePointStatus.charging)
@@ -151,20 +129,3 @@ class SimulatedChargePoint(Cp):
         self.session_active = False
         await self.send_status_notification(ChargePointStatus.finishing)
         await self.send_status_notification(ChargePointStatus.available)
-if __name__ == "__main__":
-    #  Test amaçlı AUTH BYPASS tetikle
-    cp_id = "CP_EMIN"
-
-    payload = {
-        "timestamp": time.time(),
-        "scenario": "AuthBypass",
-        "cp_id": cp_id,
-        "message_type": "StartTransaction",
-        "details": {
-            "id_tag": "FAKE_TAG_123",
-            "authorize_skipped": True
-        }
-    }
-
-    print(f"[CP_{cp_id}] 🚨 TEST: AUTH BYPASS event gönderiliyor")
-    forward_event(payload)

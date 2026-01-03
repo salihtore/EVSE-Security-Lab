@@ -24,6 +24,7 @@ class ScenarioRunner:
         adapter = ScenarioAdapter(
             scenario_name=scenario_name,
             cp_id=cp_id,
+            mode=mode, # Etiketleme için mod bilgisini aktar
         )
 
         if not hasattr(scenario_module, "run_scenario"):

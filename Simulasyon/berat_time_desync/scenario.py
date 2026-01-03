@@ -2,7 +2,7 @@
 import asyncio
 import logging
 # Modülleri içe aktar
-from .payload_generator import get_manipulated_data 
+from .payload_generator import get_drifting_data 
 from .cp_simulator import cp_event_flow      
 
 from typing import Optional
@@ -16,38 +16,10 @@ logging.basicConfig(level=logging.INFO)
 
 async def run_attack(adapter: Optional[ScenarioAdapter] = None):
     """Zaman Kaydırma ve Değer Düşürme saldırı modunu başlatır."""
-    print("\n[SCENARIO] 💣 ZAMAN KAYDIRMA SALDIRISI BAŞLADI (Çift Anomali)")
-    
-
-
-    # ================================
-    #  TIME DESYNC KANIT EVENT'İ
-    # ================================
-    if adapter:
-        csms_time = time.time()
-        cp_time = csms_time + 7200  # CP saatini +2 saat kaydırıyoruz
-
-        adapter.emit(
-            message_type="MeterValues",
-            payload={
-                "transactionId": 42,
-                "cp_timestamp": cp_time,
-                "csms_time": csms_time,
-                "time_skew_seconds": cp_time - csms_time,
-                "meterValue": [
-                    {
-                        "sampledValue": [
-                            {"value": "35"}
-                        ]
-                    }
-                ],
-                "note": "TIME_DESYNC_ATTACK_MARKER"
-            }
-        )
-    # ================================
+    print("\n[SCENARIO] 💣 ZAMAN KAYDIRMA SALDIRISI BAŞLADI (Drift Modu)")
     
     # cp_event_flow'u çağır ve manipülasyon verisini alacağı fonksiyonu ver
-    await cp_event_flow(mode="ATTACK", adapter=adapter, get_manipulated_data=get_manipulated_data)
+    await cp_event_flow(mode="ATTACK", adapter=adapter, get_manipulated_data=get_drifting_data)
     
     print("[SCENARIO] Saldırı simülasyonu tamamlandı.")
 

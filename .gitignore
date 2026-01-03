@@ -15,9 +15,9 @@ logs/
 *.joblib
 
 # NODE / REACT
-ui/dashboard/node_modules/
-ui/dashboard/.pnp/
-ui/dashboard/.pnp.js
+dashboard/node_modules/
+dashboard/.pnp/
+dashboard/.pnp.js
 
 # React build
 ui/dashboard/build/
@@ -94,3 +94,7 @@ python*.exe
 *.cache
 .cache/
 
+
+# Walrus Bridge
+.env
+src/core/walrus_service/node_modules/

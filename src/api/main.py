@@ -61,3 +61,18 @@ def security_live():
             time.sleep(0.5)
 
     return StreamingResponse(gen(), media_type="text/event-stream")
+
+@app.get("/walrus/history")
+def get_walrus_history():
+    history_file = os.path.join("logs", "walrus_history.json")
+    print(f"DEBUG: API attempting to read: {os.path.abspath(history_file)}")
+    if os.path.exists(history_file):
+        try:
+            with open(history_file, "r") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"DEBUG: API Error: {e}")
+            return []
+    else:
+        print("DEBUG: File not found")
+    return []

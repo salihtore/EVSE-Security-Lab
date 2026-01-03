@@ -1,6 +1,9 @@
 # Simulasyon/semih_yetim_seans/scenario.py
 
 import asyncio
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 SCENARIO_NAME = "semih_yetim_seans"
 
@@ -12,60 +15,50 @@ async def run_scenario(mode, adapter):
         "StartTransaction",
         {
             "transactionId": 1001,
-            "idTag": "SEMIH_TAG"
+            "idTag": "SEMIH_TAG",
+            "plug_state": True
         }
     )
 
     await asyncio.sleep(1)
 
-    # 2️⃣ MeterValues
+    # 2️⃣ MeterValues (Fiş Takılı)
     adapter.emit(
         "MeterValues",
         {
             "transactionId": 1001,
-            "meterValue": [
-                {"sampledValue": [{"value": "5"}]}
-            ]
+            "meterValue": [{"sampledValue": [{"value": "5"}]}],
+            "plug_state": True
         }
     )
+    
+    await asyncio.sleep(2)
 
-    # 3️⃣ Fiş çekildi ama StopTx yok
+    # 3️⃣ Fiş Çekildi (UNPLUGGED) ama StopTransaction YOK
+    logging.info("🔌 [SEMIH] Fiş çekildi! (Plug State: False)")
     adapter.emit(
-        "CONNECTION_LOST",
+        "MeterValues",
         {
-            "transaction_id": 1001,
-            "session_active": True,
-            "reason": "Cable unplugged without StopTransaction"
+            "transactionId": 1001,
+            "meterValue": [{"sampledValue": [{"value": "5"}]}],
+            "plug_state": False # KRİTİK: Detector buradan zaman saymaya başlar
         }
     )
 
-    # 4️⃣ ORPHAN_SESSION timeout bekle
-    await asyncio.sleep(35)
+    # 4️⃣ ORPHAN_SESSION timeout bekle (30 sn limitini geçmek için 32 sn bekliyoruz)
+    logging.info("⏳ [SEMIH] Yetim Seans tespiti bekleniyor (32 sn)...")
+    await asyncio.sleep(32)
 
-    # 5️⃣ ORPHAN_SESSION ALARM ÜRET (UI BURADAN BESLENİR)
-    await asyncio.sleep(35)
-
-    adapter.emit_alarm(
-    anomaly_type="ORPHAN_SESSION",
-    severity="MEDIUM",
-    details={
-        "reason": "Session active but StopTransaction never received",
-        "transaction_id": 1001,
-        "timeout_sec": 30
-    }
-)
-
-
-
-
-
-    # 5️⃣ Senaryo bitti (opsiyonel)
+    # 5️⃣ Trigger Event (Heartbeat)
+    # Dedektör, "Fiş çekildi ve hala Stop gelmedi" durumunu bu event gelince fark edecek
     adapter.emit(
-        "SCENARIO_END",
+        "Heartbeat",
         {
-            "info": "Scenario finished after orphan-session timeout"
+            "plug_state": False
         }
     )
+    
+    logging.info("🚨 [SEMIH] Senaryo tamamlandı. Alarm bekleniyor.")
 
 
 

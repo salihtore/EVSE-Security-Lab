@@ -46,25 +46,59 @@ async def normal_flow(cp: SimulatedChargePoint, adapter: Optional[ScenarioAdapte
     logging.info(" NORMAL AKIŞ BİTTİ")
 
 
+import random
+
 # --------------------------------------------------
 # AUTH BYPASS SALDIRISI
 # --------------------------------------------------
 async def attack_flow(cp: SimulatedChargePoint, adapter: Optional[ScenarioAdapter] = None):
     cp.attack_mode = True
 
-    logging.error("⚠ AUTH BYPASS SALDIRISI BAŞLADI")
-
+    logging.info("🕵️ [EMIN] SALDIRGAN GÖZLEMLEME YAPIYOR (Sniffing Mode)")
+    
     await cp.send_boot_notification()
     if adapter:
         adapter.emit("BootNotification", {"chargePointModel": "CP-V1", "chargePointVendor": "SimuTech"})
 
-    # ❌ Authorize yok
+    # 1. ADIM: Meşru Trafik Simülasyonu (Tarihçe oluşturmak için)
+    # Saldırgan önce sistemi normal kullanıyor veya trafiği dinliyor gibi yapıyor
+    logging.info("✅ [EMIN] Meşru işlem kaydı oluşturuluyor...")
+    await cp.authorize("VALID_TAG_HISTORY_1")
+    if adapter:
+        adapter.emit("Authorize", {"idTag": "VALID_TAG_HISTORY_1", "status": "Accepted"})
+    
+    await asyncio.sleep(1)
+    
+    await cp.start_charging()
+    if adapter:
+        adapter.emit("StartTransaction", {"idTag": "VALID_TAG_HISTORY_1", "transactionId": 100})
+    
+    await asyncio.sleep(2)
+    await cp.stop_charging()
+    if adapter:
+        adapter.emit("StopTransaction", {"transactionId": 100, "reason": "Local"})
+
+    # Bekleme süresi (Saldırgan fırsat kolluyor)
+    wait_time = random.uniform(2.0, 5.0)
+    logging.info(f"⏳ [EMIN] Saldırı için bekleniyor ({wait_time:.1f} saniye)...")
+    await asyncio.sleep(wait_time)
+
+    # 2. ADIM: SALDIRI BAŞLIYOR
+    logging.error("⚠ [EMIN] AUTH BYPASS SALDIRISI BAŞLATILIYOR")
+
+    # ❌ Authorize yok (Bypass denemesi)
+    # Ama StartTransaction öncesi kısa, yapay bir gecikme (insan tereddütü veya script gecikmesi)
+    delay = random.uniform(0.3, 1.5)
+    await asyncio.sleep(delay)
+    
     if adapter:
         adapter.emit("Authorize", {"idTag": None, "status": "MISSING_AUTHORIZE"})
 
-    await cp.start_charging()
+    await cp.start_charging(id_tag="ATTACKER")
     if adapter:
-        adapter.emit("StartTransaction", {"idTag": None, "transactionId": 999})
+        adapter.emit("StartTransaction", {"idTag": "ATTACKER", "transactionId": 999})
+
+    logging.warning("⚡ [EMIN] Yetkisiz şarj başladı, enerji çekiliyor...")
 
     for i in range(5):
         await cp.simulate_meter_values()
@@ -79,8 +113,7 @@ async def attack_flow(cp: SimulatedChargePoint, adapter: Optional[ScenarioAdapte
     if adapter:
         adapter.emit("StopTransaction", {"transactionId": 999, "reason": "Local"})
 
-
-    logging.error("⚠ AUTH BYPASS SALDIRISI TAMAMLANDI")
+    logging.error("⚠ [EMIN] AUTH BYPASS SALDIRISI TAMAMLANDI")
 
 
 # --------------------------------------------------

@@ -1,3 +1,5 @@
+# src/core/ml/scorer.py
+
 import logging
 from typing import Dict, List, Any, Optional
 
@@ -5,36 +7,60 @@ logger = logging.getLogger(__name__)
 
 
 class MLScorer:
-    def __init__(self, model: Any, feature_order: List[str]):
+    """
+    IsolationForest tabanlı anomaly scorer.
+    """
+
+    def __init__(self, model_bundle: Optional[Dict[str, Any]]):
         """
-        model: trained ML model (e.g. IsolationForest)
-        feature_order: list defining the correct order of features
+        model_bundle:
+            model_loader.load_model() çıktısı olmalı.
         """
-        self.model = model
-        self.feature_order = feature_order
+        if not model_bundle:
+            self.model = None
+            self.feature_order = []
+            self.contamination = None
+            return
+
+        self.model = model_bundle.get("model")
+        self.feature_order = model_bundle.get("feature_order", [])
+        self.contamination = model_bundle.get("contamination")
+
+    def is_ready(self) -> bool:
+        """
+        Model inference için hazır mı?
+        """
+        return self.model is not None and bool(self.feature_order)
 
     def score(self, feature_dict: Dict[str, float]) -> Optional[float]:
         """
-        Generate anomaly score from given features.
+        Feature dict -> anomaly score üretir.
+
         Returns:
-            - float anomaly score if model exists
-            - None if model is missing or error occurs
+            float : anomaly score (yüksek = daha anomal)
+            None  : model yoksa veya hata varsa
         """
-        if self.model is None:
+        if not self.is_ready():
             return None
 
         try:
-            # Vectorize features according to feature_order
-            x = [[feature_dict.get(feature, 0.0) for feature in self.feature_order]]
+            # Feature vektörünü doğru sırada oluştur
+            x = [[
+                float(feature_dict.get(feature, 0.0))
+                for feature in self.feature_order
+            ]]
 
-            # Raw score from IsolationForest
+            # IsolationForest decision_function:
+            #   yüksek -> normal
+            #   düşük  -> anomal
             raw_score = self.model.decision_function(x)[0]
 
-            # Invert score: higher = more anomalous
+            # Anomaly score:
+            #   yüksek = daha anomal
             anomaly_score = -raw_score
 
             return float(anomaly_score)
 
-        except Exception as e:
+        except Exception:
             logger.exception("ML scoring failed")
             return None

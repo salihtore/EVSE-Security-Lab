@@ -22,7 +22,8 @@ async def send_meter_values(
         await asyncio.sleep(1)
 
         if mode.upper() == "ATTACK" and get_manipulated_data:
-            payload = get_manipulated_data(cp_id)
+            # Drifting için iterasyon sayısı gönderiliyor
+            payload = get_manipulated_data(cp_id, i)
             print(f"[CP_{cp_id}] 💣 Anomali MeterValues gönderildi ({i}/{count}).")
         else:
             payload = {

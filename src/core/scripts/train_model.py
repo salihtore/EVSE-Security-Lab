@@ -1,3 +1,4 @@
+# train_model.py
 import os
 import sys
 import argparse
@@ -14,86 +15,90 @@ project_root = os.path.abspath(os.path.join(current_dir, "../../../"))
 sys.path.append(project_root)
 
 # ---------------------------------------------------------
-# KADİR'İN MODÜLLERİNİ IMPORT ET
+# FEATURE EXTRACTOR
 # ---------------------------------------------------------
 try:
     from src.core.ml.feature_extractor import extract, vectorize, FEATURE_ORDER
-except ImportError as e:
-    print("KRİTİK HATA: Feature Extractor bulunamadı!")
-    print("Kadir'in dosyasının 'src/core/ml/feature_extractor.py' olduğundan emin ol.")
+except ImportError:
+    print("KRİTİK HATA: feature_extractor bulunamadı!")
     sys.exit(1)
 
-def train(data_path, output_path):
+
+def train(data_path: str, output_path: str):
     print(f"[*] Veri seti okunuyor: {data_path}")
-    
-    # Dataset dosyasını kontrol et ve oku
+
     if not os.path.exists(data_path):
-        print(f"HATA: '{data_path}' dosyası bulunamadı.")
-        sys.exit(1)
-        
-    df = pd.read_csv(data_path)
-    
-    if len(df) == 0:
-        print("HATA: Veri seti boş!")
+        print(f"HATA: Dataset bulunamadı: {data_path}")
         sys.exit(1)
 
-    print(f"[*] Toplam {len(df)} satır veri işlenecek.")
-    print(f"[*] Kullanılan Feature Sırası: {FEATURE_ORDER}")
+    df = pd.read_csv(data_path)
+
+    if df.empty:
+        print("HATA: Dataset boş!")
+        sys.exit(1)
+
+    print(f"[*] Toplam {len(df)} satır yüklendi")
+    print(f"[*] Feature order: {FEATURE_ORDER}")
 
     X = []
-    
-    print("[*] Veriler vektörleştiriliyor...")
-    
-    for index, row in df.iterrows():
-        # Her satırdan event/state verilerini hazırla
-        # CSV düz olduğu için satırı hem event hem state yerine kullanıyoruz.
+
+    print("[*] Feature extraction başlıyor...")
+    for _, row in df.iterrows():
         row_dict = row.to_dict()
         feature_dict = extract(event=row_dict, state=row_dict)
-        
-        # Feature vektörünü oluştur
         vector = vectorize(feature_dict)
         X.append(vector)
 
     X = np.array(X)
-    print(f"[*] Eğitim verisi hazır. Matris Boyutu: {X.shape}")
+    print(f"[*] Feature matrix hazır: {X.shape}")
 
-    # IsolationForest modelini eğit
-    print("[*] IsolationForest modeli eğitiliyor...")
+    print("[*] IsolationForest eğitiliyor...")
     clf = IsolationForest(
-        n_estimators=100, 
-        contamination=0.1, 
-        random_state=42, 
+        n_estimators=100,
+        contamination=0.1,
+        random_state=42,
         n_jobs=-1
     )
     clf.fit(X)
 
-    # Modeli kaydet
+    # -----------------------------
+    # MODEL BUNDLE (KRİTİK)
+    # -----------------------------
+    bundle = {
+        "model": clf,
+        "feature_order": FEATURE_ORDER,
+        "contamination": 0.1
+    }
+
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    
-    with open(output_path, 'wb') as f:
-        pickle.dump(clf, f)
-        
-    print("-" * 50)
-    print(f"✅ [BAŞARILI] Model eğitildi ve kaydedildi.")
-    print(f"📂 Kayıt Yeri: {output_path}")
-    print("-" * 50)
+
+    with open(output_path, "wb") as f:
+        pickle.dump(bundle, f)
+
+    print("\n" + "-" * 60)
+    print("✅ MODEL BAŞARIYLA EĞİTİLDİ")
+    print(f"📂 Model yolu          : {output_path}")
+    print(f"📊 Eğitim örnek sayısı : {len(df)}")
+    print("-" * 60 + "\n")
+
 
 if __name__ == "__main__":
-    # CLI argümanlarını ayarla
-    parser = argparse.ArgumentParser(description="EVSE Anomaly Detection - Model Trainer")
-    
-    parser.add_argument(
-        '--data', 
-        type=str, 
-        default='data/dataset.csv', 
-        help='Eğitim verisi (CSV)'
+    parser = argparse.ArgumentParser(
+        description="EVSE Anomaly Detection - Model Trainer"
     )
-    
+
     parser.add_argument(
-        '--out', 
-        type=str, 
-        default='src/core/models/anomaly_model.pkl', 
-        help='Çıktı model dosyası (.pkl)'
+        "--data",
+        type=str,
+        default="data/dataset_from_logs.csv",
+        help="Eğitim dataset (CSV)"
+    )
+
+    parser.add_argument(
+        "--out",
+        type=str,
+        default="src/core/models/model.pkl",
+        help="Çıktı model dosyası"
     )
 
     args = parser.parse_args()

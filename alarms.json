@@ -1,119 +1,35 @@
 [
     {
-        "timestamp": 1766063800.044202,
-        "alarm_type": "AUTH_BYPASS",
-        "cp_id": "unknown",
+        "timestamp": 1767298868.3324316,
+        "alarm_type": "TEST_ENCRYPTION_FLOW",
+        "cp_id": "TEST_CP_001",
         "event": {
-            "timestamp": 1766063800.044202,
-            "cp_id": "unknown",
-            "message_type": "StartTransaction",
-            "idTag": "SEMIH_TAG",
-            "session_active": true,
-            "source": "CP"
+            "timestamp": 1735760000,
+            "cp_id": "TEST_CP_001",
+            "reason": "Manual Penetration Test",
+            "message_type": "SimulatedAttack"
         }
     },
     {
-        "timestamp": 1766063980.6203094,
-        "alarm_type": "AUTH_BYPASS",
-        "cp_id": "unknown",
+        "timestamp": 1767298901.819308,
+        "alarm_type": "TEST_ENCRYPTION_FLOW",
+        "cp_id": "TEST_CP_001",
         "event": {
-            "timestamp": 1766063980.6203094,
-            "cp_id": "unknown",
-            "message_type": "StartTransaction",
-            "idTag": "SEMIH_TAG",
-            "session_active": true,
-            "source": "CP"
+            "timestamp": 1735760000,
+            "cp_id": "TEST_CP_001",
+            "reason": "Manual Penetration Test",
+            "message_type": "SimulatedAttack"
         }
     },
     {
-        "timestamp": 1766064210.4800665,
-        "alarm_type": "AUTH_BYPASS",
-        "cp_id": "CP_SEMIH",
+        "timestamp": 1767298998.0863862,
+        "alarm_type": "TEST_ENCRYPTION_FLOW",
+        "cp_id": "TEST_CP_001",
         "event": {
-            "timestamp": 1766064210.4800665,
-            "cp_id": "CP_SEMIH",
-            "message_type": "StartTransaction",
-            "idTag": "SEMIH_TAG",
-            "session_active": true,
-            "source": "CP"
-        }
-    },
-    {
-        "timestamp": 1766067559.6587443,
-        "alarm_type": "AUTH_BYPASS",
-        "cp_id": "CP_OMER_FLOOD",
-        "event": {
-            "timestamp": 1766067559.6558046,
-            "cp_id": "CP_OMER_FLOOD",
-            "message_type": "StartTransaction",
-            "idTag": "TAG_ATTACKER",
-            "session_active": true,
-            "source": "CP"
-        }
-    },
-    {
-        "timestamp": 1766067562.866793,
-        "alarm_type": "AUTH_BYPASS",
-        "cp_id": "CP_OMER_FLOOD",
-        "event": {
-            "timestamp": 1766067562.866793,
-            "cp_id": "CP_OMER_FLOOD",
-            "message_type": "StartTransaction",
-            "idTag": "TAG_ATTACKER",
-            "session_active": true,
-            "source": "CP"
-        }
-    },
-    {
-        "timestamp": 1766067565.9683104,
-        "alarm_type": "AUTH_BYPASS",
-        "cp_id": "CP_OMER_FLOOD",
-        "event": {
-            "timestamp": 1766067565.9683104,
-            "cp_id": "CP_OMER_FLOOD",
-            "message_type": "StartTransaction",
-            "idTag": "TAG_ATTACKER",
-            "session_active": true,
-            "source": "CP"
-        }
-    },
-    {
-        "timestamp": 1766067611.4645247,
-        "alarm_type": "AUTH_BYPASS",
-        "cp_id": "CP_OMER_FLOOD",
-        "event": {
-            "timestamp": 1766067611.4645247,
-            "cp_id": "CP_OMER_FLOOD",
-            "message_type": "StartTransaction",
-            "idTag": "TAG_ATTACKER",
-            "session_active": true,
-            "source": "CP"
-        }
-    },
-    {
-        "timestamp": 1766067614.566559,
-        "alarm_type": "AUTH_BYPASS",
-        "cp_id": "CP_OMER_FLOOD",
-        "event": {
-            "timestamp": 1766067614.566559,
-            "cp_id": "CP_OMER_FLOOD",
-            "message_type": "StartTransaction",
-            "idTag": "TAG_ATTACKER",
-            "session_active": true,
-            "source": "CP"
-        }
-    },
-    {
-        "timestamp": 1766067617.6773322,
-        "alarm_type": "AUTH_BYPASS",
-        "cp_id": "CP_OMER_FLOOD",
-        "event": {
-            "timestamp": 1766067617.6773322,
-            "cp_id": "CP_OMER_FLOOD",
-            "message_type": "StartTransaction",
-            "idTag": "TAG_ATTACKER",
-            "session_active": true,
-            "source": "CP"
+            "timestamp": 1735760000,
+            "cp_id": "TEST_CP_001",
+            "reason": "Manual Penetration Test",
+            "message_type": "SimulatedAttack"
         }
     }
 ]

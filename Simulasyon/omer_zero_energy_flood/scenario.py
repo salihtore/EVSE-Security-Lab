@@ -2,104 +2,65 @@ import asyncio
 import logging
 import websockets
 from ocpp.v16.enums import ChargePointStatus
-
-# Aynı klasördeki charge_point.py modülünden sınıfı çekiyoruz
-# Not: run_all.py üzerinden çalıştırılacağı için import yolu 'Simulasyon...' şeklinde olabilir
-# ancak aynı dizindeysen bu import çalışır.
-try:
-    from .charge_point import SimulatedChargePoint
-except ImportError:
-    from charge_point import SimulatedChargePoint
+from src.core.scenario_adapter import ScenarioAdapter
+from .charge_point import SimulatedChargePoint
 
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-CP_ID = "CP_OMER_FLOOD"
-CSMS_URL = f"ws://127.0.0.1:9000/{CP_ID}"
+import random
 
-# --- NORMAL AKIŞ (Referans) ---
-async def run_normal():
-    logging.info(f"✔ NORMAL MOD BAŞLIYOR: {CP_ID}")
-    async with websockets.connect(CSMS_URL, subprotocols=["ocpp1.6"]) as ws:
-        cp = SimulatedChargePoint(CP_ID, ws)
-        await asyncio.gather(
-            cp.start(),
-            normal_flow(cp),
-        )
-
-async def normal_flow(cp: SimulatedChargePoint):
-    await cp.send_boot_notification()
-    await asyncio.sleep(1)
+async def bot_attack(bot_index, adapter):
+    bot_id = f"CP_BOT_{random.randint(10000, 99999)}"
+    uri = f"ws://127.0.0.1:9000/{bot_id}"
     
-    # 1. Status Available
-    await cp.send_status_notification(ChargePointStatus.available)
+    logger.info(f"🤖 [BOTNET] Bot {bot_index+1} başlatılıyor ({bot_id})...")
     
-    # 2. Şarjı Başlat (Normal Enerji Artışı)
-    logging.info("Normal şarj başlatılıyor...")
-    await cp.start_charging(id_tag="TAG_NORMAL_USER")
-    
-    # 3. 5 Adım Boyunca Enerji Tüket (Her adımda 0.5 kWh artar)
-    for _ in range(5):
-        await asyncio.sleep(2)
-        await cp.simulate_meter_values(step_kwh=0.5)
-        
-    # 4. Şarjı Durdur
-    await cp.stop_charging(reason="EVDisconnected")
-    logging.info("Normal şarj bitti.")
-
-# --- SALDIRI AKIŞI (Zero-Energy Flood) ---
-async def run_attack():
-    logging.error(f"⚠ SALDIRI MODU BAŞLIYOR: {CP_ID} (Zero-Energy Flood)")
-    async with websockets.connect(CSMS_URL, subprotocols=["ocpp1.6"]) as ws:
-        cp = SimulatedChargePoint(CP_ID, ws)
-        await asyncio.gather(
-            cp.start(),
-            attack_flow(cp),
-        )
-
-async def attack_flow(cp: SimulatedChargePoint):
-    """
-    Raporun Senaryosu: CAN-Bus Replay Attack.
-    Araç sürekli 'StopCharging' (0 enerji) sinyali yolluyor.
-    Bu da CSMS üzerinde bir sel (flood) oluşturuyor.
-    """
-    await cp.send_boot_notification()
-    await asyncio.sleep(1)
-    
-    # FLOOD DÖNGÜSÜ: 3 Kez Tekrarla
-    for i in range(3):
-        logging.info(f"--- FLOOD ATTACK ITERATION {i+1} ---")
-        
-        # 1. Hazır Ol
-        await cp.send_status_notification(ChargePointStatus.available)
-        await asyncio.sleep(0.2) # Hızlı
-        
-        # 2. Şarjı Başlat (Meter 0 ile başla)
-        # Saldırgan ID kullanıyoruz
-        await cp.start_charging(id_tag="TAG_ATTACKER_01", meter_start=0)
-        
-        # 3. MeterValues Gönder (Ama hep 0 kWh - Replay Attack etkisi)
-        # step_kwh yok, force_value=0 var.
-        for _ in range(3):
-            await asyncio.sleep(0.5) # Çok kısa süre
-            await cp.simulate_meter_values(force_value=0)
+    try:
+        async with websockets.connect(uri, subprotocols=["ocpp1.6"]) as ws:
+            cp = SimulatedChargePoint(bot_id, ws)
+            cp_task = asyncio.create_task(cp.start())
             
-        # 4. Hemen Kapat (0 Tüketimle)
-        await cp.stop_charging(reason="EVDisconnected")
-        logging.info(f"Iteration {i+1} completed with 0 kWh.")
+            await cp.send_boot_notification()
+            adapter.emit("BootNotification", {"model": "FloodBot", "vendor": "DarkNet"}, override_cp_id=bot_id)
+            
+            # Hızlı Saldırı: Start -> Meter(0) -> Stop
+            id_tag = f"BAD_TAG_{bot_index}"
+            await cp.start_charging(id_tag=id_tag, meter_start=0)
+            adapter.emit("StartTransaction", {"idTag": id_tag, "transactionId": cp.transaction_id}, override_cp_id=bot_id)
+            
+            # Zero Energy
+            await cp.simulate_meter_values(force_value=0)
+            adapter.emit("MeterValues", {"transactionId": cp.transaction_id, "meterValue": "0"}, override_cp_id=bot_id)
+            
+            await cp.stop_charging(reason="EVDisconnected")
+            adapter.emit("StopTransaction", {"transactionId": cp.transaction_id, "reason": "Local"}, override_cp_id=bot_id)
+            
+            cp_task.cancel()
+            
+    except Exception as e:
+        logger.error(f"❌ Bot {bot_id} hatası: {e}")
+
+async def run_attack_with_adapter(adapter):
+    logger.info("🌊 [OMER] ZERO ENERGY FLOOD (BOTNET MODE) BAŞLATILIYOR")
+    
+    tasks = []
+    # 5-10 Bot aynı anda saldırıyor
+    for i in range(8): 
+        tasks.append(bot_attack(i, adapter))
+        await asyncio.sleep(0.2) # Hafif kademeli başlatma
         
-        await asyncio.sleep(1) # Bir sonraki flood dalgası için az bekle
+    await asyncio.gather(*tasks)
+    
+    logger.info("🚨 [OMER] BOTNET SALDIRISI TAMAMLANDI")
 
-    logging.info("Saldırı senaryosu tamamlandı.")
-
-# --- ANA ÇALIŞTIRICI ---
-def run_scenario(mode: str = "normal"):
+def run_scenario(mode: str = "attack", adapter: ScenarioAdapter = None):
     if mode == "attack":
-        asyncio.run(run_attack())
+        asyncio.run(run_attack_with_adapter(adapter))
     else:
-        asyncio.run(run_normal())
+        logger.info("Normal mod bu senaryo için tasarlanmadı.")
 
 if __name__ == "__main__":
-    # Test için doğrudan çalıştırılabilir
-    # python scenario.py (varsayılan normal)
-    # python scenario.py attack (bunun için sys.argv bakmak gerekir ama şimdilik manuel test)
-    run_scenario("attack")
+    from src.core.scenario_adapter import ScenarioAdapter
+    adapter = ScenarioAdapter("CP_OMER_FLOOD", "omer_zero_energy_flood")
+    run_scenario("attack", adapter)

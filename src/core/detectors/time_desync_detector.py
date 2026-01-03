@@ -11,44 +11,37 @@ class TimeDesyncDetector:
     """
     anomaly_type = "TIME_DESYNC"
 
-    def __init__(self, max_skew_seconds: int = 60) -> None:
+    def __init__(self, max_skew_seconds: int = 300) -> None:
         self.max_skew = max_skew_seconds
 
     def process(self, event: Dict) -> Optional[Dict]:
-        
-        # 1️⃣ Timestamp kaynağını güvenli seç
-
+        cp = event.get("cp_id")
         payload = event.get("payload", {}) or {}
 
+        # Öncelik sırası: CP'nin kendi zaman damgası > CSMS'in verdiği zaman > Ham log zamanı
         event_ts = (
             payload.get("cp_timestamp")
             or payload.get("csms_time")
             or event.get("timestamp")
         )
 
-
         if event_ts is None:
-            logging.warning("[TimeDesyncDetector] Event timestamp yok, atlandı")
             return None
 
         now = time.time()
         skew = abs(now - event_ts)
 
-        # 2️⃣ Debug log (kritik)
-        logging.debug(
-            f"[TimeDesyncDetector] CP={event.get('cp_id')} skew={skew:.2f}s"
-        )
-
         if skew > self.max_skew:
-            # 3️⃣ ANA MOTORLA UYUMLU ALARM FORMAT
             return {
                 "anomaly_type": self.anomaly_type,
-                "cp_id": event.get("cp_id"),
+                "cp_id": cp,
                 "severity": "MEDIUM",
                 "details": {
-                    "message": f"Time desync detected (skew={int(skew)}s)",
+                    "reason": f"Clock skew exceeded limits ({int(skew)}s)",
                     "skew_seconds": int(skew),
-                    "event": event,
-                }
-        }
+                    "cp_time": event_ts,
+                    "server_time": now
+                },
+                "timestamp": now
+            }
         return None

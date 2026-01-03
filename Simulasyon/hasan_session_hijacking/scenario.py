@@ -11,6 +11,7 @@ SENARYO: Oturum Çalma (Session Hijacking)
 import asyncio
 import logging
 import websockets
+from src.core.scenario_adapter import ScenarioAdapter
 from .charge_point import SimulatedChargePoint, HijackerChargePoint
 
 logging.basicConfig(level=logging.INFO)
@@ -103,128 +104,93 @@ async def run_attack():
         logger.error(f"❌ Saldırı senaryosu hatası: {e}")
 
 
-async def attack_flow(victim_cp: SimulatedChargePoint, attacker_ws):
-    """
-    Saldırı Akışı:
-    1. Kurban normal şarj başlatır
-    2. Saldırgan transaction ID'yi ele geçirir (dinleme/replay)
-    3. Saldırgan çalınan transaction ID ile MeterValues gönderir
-    4. Saldırgan oturumu kapatır (idTag mismatch)
-    """
+# ============================================================================
+# Ana Koşucu Fonksiyon (ScenarioRunner uyumlu)
+# ============================================================================
+
+async def attack_flow_with_adapter(victim_cp, attacker_ws, adapter):
     try:
         # ==================== PHASE 1: Normal Kullanıcı Başlatıyor ====================
         logger.info("\n📱 [KURBAN] Kullanıcı şarj oturumu başlatıyor...")
         await victim_cp.send_boot_notification()
+        adapter.emit("BootNotification", {"model": "HASAN_VICTIM", "vendor": "SimuTech"})
         await asyncio.sleep(1)
         
         await victim_cp.start_charging()
+        adapter.emit("StartTransaction", {"idTag": victim_cp.id_tag, "transactionId": victim_cp.transaction_id})
         await asyncio.sleep(2)
         
         # İlk birkaç MeterValues normal gönderiliyor
         logger.info("\n⚡ [KURBAN] Normal şarj devam ediyor...")
-        for i in range(3):
+        for i in range(2):
             await victim_cp.simulate_meter_values(step_kwh=0.5)
-            await asyncio.sleep(2)
+            adapter.emit("MeterValues", {"transactionId": victim_cp.transaction_id, "meterValue": str(victim_cp.meter_value)})
+            await asyncio.sleep(1)
         
-        # ==================== PHASE 2: Saldırgan Dinliyor / TransactionID Ele Geçiriyor ====================
-        logger.warning("\n" + "=" * 80)
-        logger.warning("🔴 SALDIRI BAŞLIYOR: Saldırgan ağ trafiğini dinledi!")
-        logger.warning(f"🕵️ TransactionID ele geçirildi: {victim_cp.transaction_id}")
-        logger.warning(f"🕵️ IdTag ele geçirildi: {victim_cp.id_tag}")
-        logger.warning("=" * 80)
-        
-        await asyncio.sleep(2)
+        # ==================== PHASE 2: Saldırgan Dinliyor ====================
+        logger.warning("\n🕵️ TransactionID ele geçirildi: " + str(victim_cp.transaction_id))
         
         # ==================== PHASE 3: Saldırgan Oturumu Devralıyor ====================
         logger.error("\n🚨 SALDIRGAN OTURUMU DEVRALıYOR...")
         
-        # Saldırgan kendi cihazını (farklı CP) kullanarak bağlanıyor
         attacker_cp = HijackerChargePoint(
             "CP_HASAN_ATTACKER",
             attacker_ws,
-            stolen_transaction_id=victim_cp.transaction_id,  # ÇALINMIŞ TRANSACTION ID
+            stolen_transaction_id=victim_cp.transaction_id,
             stolen_id_tag=victim_cp.id_tag,
         )
         
-        # Saldırganın connection'ı başlat (listener)
         asyncio.create_task(attacker_cp.start())
         await asyncio.sleep(1)
         
+        # 🛡️ Manuel Alarm Kaldırıldı - SessionHijackingDetector yakalayacak
+        # adapter.emit_alarm(...)
+
         await attacker_cp.send_boot_notification()
-        await asyncio.sleep(1)
         
-        # Saldırgan çalınan transaction ID ile MeterValues gönderiyor
-        logger.error("\n🔴 PHASE 1: Saldırgan MeterValues gönderiyor (farklı connector/cihaz)...")
-        for i in range(3):
+        # Saldırgan çalınan transaction ID ile MeterValues gönderiyor (Düşük frekanslı sabotaj)
+        logging.warning("\n🕸️ [ATTACK] Oturum 'Zombie' moduna alınıyor (Veri akışı yavaşlatıldı)...")
+        for i in range(5):
             await attacker_cp.hijack_meter_values()
-            await asyncio.sleep(2)
+            adapter.emit("MeterValues", {"transactionId": victim_cp.transaction_id, "meterValue": "999"}, override_cp_id="CP_HASAN_ATTACKER")
+            await asyncio.sleep(3) # Düşük frekans (Low frequency)
         
-        # ==================== PHASE 4: Anomali Tespiti Beklenen Durumlar ====================
-        logger.warning("\n⚠️ BEKLENEN ANOMALİLER:")
-        logger.warning("  1. Aynı transactionId için farklı connector ID kullanıldı")
-        logger.warning("  2. Aynı transactionId için farklı IP adresinden bağlantı")
-        logger.warning("  3. Sayaç değerlerinde mantıksız artış/azalış")
-        logger.warning("  4. Gerçek kullanıcı oturumu devam ederken saldırgan da mesaj gönderiyor")
-        
-        await asyncio.sleep(2)
-        
-        # ==================== PHASE 5: Saldırgan Oturumu Kapatıyor (idTag Mismatch) ====================
-        logger.error("\n🔴 PHASE 2: Saldırgan oturumu kapatıyor (YANLIŞ ID TAG ile)...")
-        await attacker_cp.hijack_stop_transaction(use_wrong_id_tag=True)
-        
-        logger.error("\n⚠️ BEKLENEN ANOMALİ:")
-        logger.error(f"  - StopTransaction idTag mismatch: Beklenen={victim_cp.id_tag}, Gelen={attacker_cp.hijacker_id_tag}")
-        
-        await asyncio.sleep(2)
-        
-        # ==================== PHASE 6: Gerçek Kullanıcı Oturumun Çalındığını Fark Ediyor ====================
-        logger.warning("\n📱 [KURBAN] Kullanıcı şarj devam ettirmeye çalışıyor ama oturum çalınmış!")
-        try:
-            await victim_cp.simulate_meter_values()
-        except Exception as e:
-            logger.error(f"❌ Kurban mesaj gönderemiyor - oturum geçersiz: {e}")
-        
-        # ==================== SALDIRI SONUÇ ====================
-        logger.error("\n" + "=" * 80)
-        logger.error("🚨 SALDIRI TAMAMLANDI: SESSION HIJACKING BAŞARILI")
-        logger.error("=" * 80)
-        logger.error("\n📊 SALDIRI SONUÇLARI:")
-        logger.error("  ❌ Gerçek kullanıcı oturumu kaybetti")
-        logger.error("  ❌ Faturalama verisi manipüle edildi")
-        logger.error("  ❌ Saldırgan bedava şarj aldı")
-        logger.error("  ❌ Loglarda tutarsızlıklar oluştu")
-        logger.error("\n🔍 TESPİT EDİLMESİ GEREKEN İZLER (IoC):")
-        logger.error("  1. Aynı transactionId, farklı connector/IP")
-        logger.error("  2. IdTag mismatch (StopTransaction)")
-        logger.error("  3. Sayaç değerlerinde anormal değişimler")
-        logger.error("  4. Replay edilmiş mesajlar (aynı timestamp/payload)")
-        logger.error("=" * 80 + "\n")
+        # ==================== PHASE 4: StopTransaction YOK (Zombie Session) ====================
+        logger.error("\n🕷️ SALDIRGAN OTURUMU KAPATMADI - ZOMBIE SESSION BIRAKILDI")
+        logger.info("   (Gerçekçi Session Hijacking: Oturum açık bırakıldı, para/enerji kaybı sürüyor)")
         
     except Exception as e:
         logger.error(f"❌ Saldırı akışı hatası: {e}")
 
-
-# ============================================================================
-# Ana Koşucu Fonksiyon
-# ============================================================================
-
-def run_scenario(mode: str = "normal"):
-    """
-    Senaryo koşucu
+async def run_attack_with_adapter(adapter):
+    victim_uri = "ws://127.0.0.1:9000/CP_HASAN_VICTIM"
+    attacker_uri = "ws://127.0.0.1:9000/CP_HASAN_ATTACKER"
     
-    Args:
-        mode: "normal" veya "attack"
-    """
-    if mode == "attack":
-        logger.warning("\n⚠️⚠️⚠️ SALDIRI MODU SEÇİLDİ ⚠️⚠️⚠️\n")
-        asyncio.run(run_attack())
-    else:
-        logger.info("\n✅ NORMAL MOD SEÇİLDİ\n")
-        asyncio.run(run_normal())
+    try:
+        async with websockets.connect(victim_uri, subprotocols=["ocpp1.6"]) as victim_ws, \
+                   websockets.connect(attacker_uri, subprotocols=["ocpp1.6"]) as attacker_ws:
+            
+            victim_cp = SimulatedChargePoint("CP_HASAN_VICTIM", victim_ws)
+            victim_cp_task = asyncio.create_task(victim_cp.start())
+            
+            await attack_flow_with_adapter(victim_cp, attacker_ws, adapter)
+            
+            await asyncio.sleep(1)
+            victim_cp_task.cancel()
+            
+    except Exception as e:
+        logger.error(f"❌ Senaryo hatası: {e}")
 
+def run_scenario(mode: str = "attack", adapter: ScenarioAdapter = None):
+    if mode == "normal":
+        logger.info("Normal mod bu senaryo için şu an adapter ile optimize edilmedi.")
+        # Basitlik için sadece attack modunu adapter ile çalıştırıyoruz
+    else:
+        asyncio.run(run_attack_with_adapter(adapter))
 
 if __name__ == "__main__":
-    # Test için doğrudan çalıştırılabilir
     import sys
-    mode = sys.argv[1] if len(sys.argv) > 1 else "normal"
-    run_scenario(mode)
+    from src.core.scenario_adapter import ScenarioAdapter
+    mode = sys.argv[1] if len(sys.argv) > 1 else "attack"
+    adapter = ScenarioAdapter("CP_HASAN_VICTIM", "hasan_session_hijacking")
+    run_scenario(mode, adapter)
