@@ -1,103 +1,164 @@
-# Simulasyon/emin_auth_bypass/scenario.py
-
 import asyncio
-import websockets
 import logging
+import websockets
+from typing import Optional
+from src.core.scenario_adapter import ScenarioAdapter
 
-from Simulasyon.core.event_bus import emit_event
+from .charge_point import SimulatedChargePoint
 
 logging.basicConfig(level=logging.INFO)
 
-CSMS_URI = "ws://127.0.0.1:9002/CP_EMIN"
+CP_ID = "CP_EMIN"
+CSMS_URL = f"ws://127.0.0.1:9000/{CP_ID}"
 
 
-async def run_normal():
-    """
-    Normal akış: Authorize -> Accepted -> StartTransaction
-    Bu akışta alarm BEKLENMEZ.
-    """
-    async with websockets.connect(CSMS_URI, subprotocols=["ocpp1.6"]) as ws:
-        
-        # 1) AUTH
-        emit_event(
-            senaryo="AuthBypass",
-            cp_id="CP_EMIN",
-            message_type="Authorize",
-            idTag="VALID123",
-            source="CP"
-        )
+# --------------------------------------------------
+# NORMAL AKIŞ (REFERANS)
+# --------------------------------------------------
+async def normal_flow(cp: SimulatedChargePoint, adapter: Optional[ScenarioAdapter] = None):
+    logging.info(" NORMAL AKIŞ BAŞLADI")
+
+    await cp.send_boot_notification()
+    if adapter:
+        adapter.emit("BootNotification", {"chargePointModel": "CP-V1", "chargePointVendor": "SimuTech"})
+
+    await cp.authorize("VALID_TAG_123")
+    if adapter:
+        adapter.emit("Authorize", {"idTag": "VALID_TAG_123", "status": "Accepted"})
+
+    await cp.start_charging()
+    if adapter:
+        adapter.emit("StartTransaction", {"idTag": "VALID_TAG_123", "transactionId": 1})
+
+    for i in range(5):
+        await cp.simulate_meter_values()
+        if adapter:
+            adapter.emit("MeterValues", {
+                "transactionId": 1,
+                "meterValue": [{"sampledValue": [{"value": str(100 + i)}]}]
+            })
         await asyncio.sleep(1)
 
-        # 2) Accept geldi varsayıyoruz (normal akış)
-        emit_event(
-            senaryo="AuthBypass",
-            cp_id="CP_EMIN",
-            message_type="Authorize.conf",
-            idTag="VALID123",
-            auth_status="Accepted",
-            source="CSMS"
-        )
+    await cp.stop_charging()
+    if adapter:
+        adapter.emit("StopTransaction", {"transactionId": 1, "reason": "Local"})
+
+    logging.info(" NORMAL AKIŞ BİTTİ")
+
+
+import random
+
+# --------------------------------------------------
+# AUTH BYPASS SALDIRISI
+# --------------------------------------------------
+async def attack_flow(cp: SimulatedChargePoint, adapter: Optional[ScenarioAdapter] = None):
+    cp.attack_mode = True
+
+    logging.info("🕵️ [EMIN] SALDIRGAN GÖZLEMLEME YAPIYOR (Sniffing Mode)")
+    
+    await cp.send_boot_notification()
+    if adapter:
+        adapter.emit("BootNotification", {"chargePointModel": "CP-V1", "chargePointVendor": "SimuTech"})
+
+    # 1. ADIM: Meşru Trafik Simülasyonu (Tarihçe oluşturmak için)
+    # Saldırgan önce sistemi normal kullanıyor veya trafiği dinliyor gibi yapıyor
+    logging.info("✅ [EMIN] Meşru işlem kaydı oluşturuluyor...")
+    await cp.authorize("VALID_TAG_HISTORY_1")
+    if adapter:
+        adapter.emit("Authorize", {"idTag": "VALID_TAG_HISTORY_1", "status": "Accepted"})
+    
+    await asyncio.sleep(1)
+    
+    await cp.start_charging()
+    if adapter:
+        adapter.emit("StartTransaction", {"idTag": "VALID_TAG_HISTORY_1", "transactionId": 100})
+    
+    await asyncio.sleep(2)
+    await cp.stop_charging()
+    if adapter:
+        adapter.emit("StopTransaction", {"transactionId": 100, "reason": "Local"})
+
+    # Bekleme süresi (Saldırgan fırsat kolluyor)
+    wait_time = random.uniform(2.0, 5.0)
+    logging.info(f"⏳ [EMIN] Saldırı için bekleniyor ({wait_time:.1f} saniye)...")
+    await asyncio.sleep(wait_time)
+
+    # 2. ADIM: SALDIRI BAŞLIYOR
+    logging.error("⚠ [EMIN] AUTH BYPASS SALDIRISI BAŞLATILIYOR")
+
+    # ❌ Authorize yok (Bypass denemesi)
+    # Ama StartTransaction öncesi kısa, yapay bir gecikme (insan tereddütü veya script gecikmesi)
+    delay = random.uniform(0.3, 1.5)
+    await asyncio.sleep(delay)
+    
+    if adapter:
+        adapter.emit("Authorize", {"idTag": None, "status": "MISSING_AUTHORIZE"})
+
+    await cp.start_charging(id_tag="ATTACKER")
+    if adapter:
+        adapter.emit("StartTransaction", {"idTag": "ATTACKER", "transactionId": 999})
+
+    logging.warning("⚡ [EMIN] Yetkisiz şarj başladı, enerji çekiliyor...")
+
+    for i in range(5):
+        await cp.simulate_meter_values()
+        if adapter:
+            adapter.emit("MeterValues", {
+                "transactionId": 999,
+                "meterValue": [{"sampledValue": [{"value": str(200 + i)}]}]
+            })
         await asyncio.sleep(1)
 
-        # 3) StartTransaction (normal)
-        emit_event(
-            senaryo="AuthBypass",
-            cp_id="CP_EMIN",
-            message_type="StartTransaction",
-            idTag="VALID123",
-            transactionId=111,
-            session_active=True,
-            source="CP"
-        )
+    await cp.stop_charging()
+    if adapter:
+        adapter.emit("StopTransaction", {"transactionId": 999, "reason": "Local"})
 
-        await asyncio.sleep(2)
+    logging.error("⚠ [EMIN] AUTH BYPASS SALDIRISI TAMAMLANDI")
 
 
-async def run_attack():
-    """
-    Saldırı akışı: AUTH YOK, DOĞRUDAN StartTransaction geliyor.
-    Ana motor bunu AUTH_BYPASS olarak yakalayacak.
-    """
-    async with websockets.connect(CSMS_URI, subprotocols=["ocpp1.6"]) as ws:
-
-        # Hiç AUTHORIZE yollamadan direk StartTransaction
-        emit_event(
-            senaryo="AuthBypass",
-            cp_id="CP_EMIN",
-            message_type="StartTransaction",
-            idTag="HACKER123",
-            transactionId=999,
-            session_active=True,
-            source="ATTACKER"
-        )
-
-        await asyncio.sleep(2)
-
-        # Ek saldırı: sahte Accepted mesajını hacker gönderiyor
-        emit_event(
-            senaryo="AuthBypass",
-            cp_id="CP_EMIN",
-            message_type="Authorize.conf",
-            idTag="HACKER123",
-            auth_status="Accepted",
-            source="ATTACKER"
-        )
-
-        await asyncio.sleep(2)
-
-        # Normal Stop (mantık gereği)
-        emit_event(
-            senaryo="AuthBypass",
-            cp_id="CP_EMIN",
-            message_type="StopTransaction",
-            session_active=False,
-            transactionId=999,
-            source="CP"
-        )
+# --------------------------------------------------
+# RUNNERS
+# --------------------------------------------------
+async def run_normal(adapter: Optional[ScenarioAdapter] = None):
+    async with websockets.connect(CSMS_URL, subprotocols=["ocpp1.6"]) as ws:
+        cp = SimulatedChargePoint(CP_ID, ws)
+    await asyncio.gather(cp.start(), normal_flow(cp, adapter))
 
 
-def run_scenario(scenario="attack"):
-    if scenario == "normal":
-        asyncio.run(run_normal())
+
+async def run_attack(adapter: Optional[ScenarioAdapter] = None):
+    async with websockets.connect(CSMS_URL, subprotocols=["ocpp1.6"]) as ws:
+        cp = SimulatedChargePoint(CP_ID, ws)
+
+        # cp.start() ayrı task olarak çalışsın
+        cp_task = asyncio.create_task(cp.start())
+
+        # saldırıyı çalıştır
+        await attack_flow(cp, adapter)
+
+        # 🔴 KRİTİK: alarmın ana motora düşmesi için bekle
+        await asyncio.sleep(1)
+
+        # bağlantıyı kontrollü kapat
+        cp_task.cancel()
+
+
+
+
+# --------------------------------------------------
+# ENTRY POINT
+# --------------------------------------------------
+def run_scenario(mode: str = "attack", adapter: Optional[ScenarioAdapter] = None):
+    if mode == "normal":
+        logging.info("▶ NORMAL MOD ÇALIŞTIRILIYOR")
+        asyncio.run(run_normal(adapter))
     else:
-        asyncio.run(run_attack())
+        logging.error("▶ AUTH BYPASS SALDIRI MODU ÇALIŞTIRILIYOR")
+        asyncio.run(run_attack(adapter))
+
+
+
+if __name__ == "__main__":
+    run_scenario("attack")
+
+#python run_all.py --scenario emin_auth_bypass --mode attack

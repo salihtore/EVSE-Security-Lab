@@ -1,4 +1,101 @@
-.venv/
-venv/
+# PYTHON
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+
+
+# FastAPI logs
+logs/
+*.log
+*.jsonl
+
+# Model files
+*.pkl
+*.joblib
+
+# NODE / REACT
+dashboard/node_modules/
+dashboard/.pnp/
+dashboard/.pnp.js
+
+# React build
+ui/dashboard/build/
+ui/dashboard/dist/
+
+# System
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# =====================================================
+# Python Core
+# =====================================================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# =====================================================
+# Virtual Environments
+# =====================================================
+.venv/
+venv/
+ENV/
+env/
+
+# =====================================================
+# Logs & Runtime Artifacts
+# =====================================================
+logs/
+*.log
+
+# Security / Event Outputs
+alarms.json
+alarms.jsonl
+events.jsonl
+security_events.jsonl
+
+# =====================================================
+# ML / Dataset / Generated Data
+# =====================================================
+data/
+datasets/
+*.csv
+*.parquet
+*.npz
+
+# =====================================================
+# OS / Editor / IDE
+# =====================================================
+.DS_Store
+Thumbs.db
+
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# =====================================================
+# Windows / Local Binaries
+# =====================================================
+python*.exe
+*.dll
+
+# =====================================================
+# Build / Temp
+# =====================================================
+*.tmp
+*.bak
+*.cache
+.cache/
+
+
+# Walrus Bridge
+.env
+src/core/walrus_service/node_modules/
+.walrus_config

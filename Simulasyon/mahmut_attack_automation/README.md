@@ -21,4 +21,3 @@ Bu akış, normal akışın üzerine eklenir.
 | **StartTransaction** | Şarj başlar. | - |
 | **MeterValues** | Gerçekte **0.5 kWh** enerji harcanırken, raporlanan sayaç değeri her adımda sadece **0.1 kWh** artar. | [cite_start]**Beklenenden düşük kWh raporu** (Dashbord Kuralı: Kural-1 ihlali) [cite: 249] |
 | **StopTransaction** | Şarj işlemi **0.5 kWh** değeriyle sonlandırılır, oysa gerçek tüketim **2.5 kWh**'dir. | CSMS tarafından beklenen tüketim/süre oranı ihlali. |
-

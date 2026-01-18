@@ -1,0 +1,26 @@
+{
+  "name": "evse_01",
+  "version": "1.0.0",
+  "description": "**Akıllı Şarj İstasyonlarında (EVSE) Siber-Fiziksel Güvenlik Test ve Simülasyon Platformu**",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/salihtore/EVSE-Security-Lab.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/salihtore/EVSE-Security-Lab/issues"
+  },
+  "homepage": "https://github.com/salihtore/EVSE-Security-Lab#readme",
+  "dependencies": {
+    "@mysten/bcs": "^1.9.2",
+    "@mysten/seal": "^0.9.6",
+    "@mysten/sui": "^1.45.2"
+  }
+}

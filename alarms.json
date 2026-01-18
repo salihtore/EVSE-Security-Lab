@@ -1,0 +1,35 @@
+[
+    {
+        "timestamp": 1767298868.3324316,
+        "alarm_type": "TEST_ENCRYPTION_FLOW",
+        "cp_id": "TEST_CP_001",
+        "event": {
+            "timestamp": 1735760000,
+            "cp_id": "TEST_CP_001",
+            "reason": "Manual Penetration Test",
+            "message_type": "SimulatedAttack"
+        }
+    },
+    {
+        "timestamp": 1767298901.819308,
+        "alarm_type": "TEST_ENCRYPTION_FLOW",
+        "cp_id": "TEST_CP_001",
+        "event": {
+            "timestamp": 1735760000,
+            "cp_id": "TEST_CP_001",
+            "reason": "Manual Penetration Test",
+            "message_type": "SimulatedAttack"
+        }
+    },
+    {
+        "timestamp": 1767298998.0863862,
+        "alarm_type": "TEST_ENCRYPTION_FLOW",
+        "cp_id": "TEST_CP_001",
+        "event": {
+            "timestamp": 1735760000,
+            "cp_id": "TEST_CP_001",
+            "reason": "Manual Penetration Test",
+            "message_type": "SimulatedAttack"
+        }
+    }
+]

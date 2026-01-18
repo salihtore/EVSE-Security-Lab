@@ -1,44 +1,39 @@
-# Simulasyon/core/security_engine.py
 import json
 import os
 import time
 from collections import defaultdict
+from Simulasyon.core.sse_bus import publish_alarm_threadsafe
+from Simulasyon.core.log_bundler import bundler
+
+# Start the bundler
+bundler.start()
+
 
 # =====================================================
 #  ALARM LOG dosyası
 # =====================================================
 
-LOG_PATH = "alarms.json"
+# =====================================================
+#  ALARM LOG dosyası (JSONL Formatı)
+# =====================================================
 
-def log_alarm_json(alarm_type, cp_id, event):
+# =====================================================
+#  ALARM LOG dosyası (JSONL Formatı)
+# =====================================================
+
+LOG_PATH = os.path.join("logs", "alarms.jsonl")
+
+def log_alarm_json(alarm):
     """
-    Oluşan tüm alarmları JSON dosyasına kaydeder.
+    Oluşan FULL alarm objesini JSONL dosyasına ekler.
     Dashboard tarafından okunur.
     """
-    alarm_entry = {
-        "timestamp": time.time(),
-        "alarm_type": alarm_type,
-        "cp_id": cp_id,
-        "event": event,
-    }
+    # Ensure directory exists
+    os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
 
-    # Dosya yoksa oluştur
-    if not os.path.exists(LOG_PATH):
-        with open(LOG_PATH, "w") as f:
-            json.dump([], f)
-
-    # Eski logları oku
-    with open(LOG_PATH, "r") as f:
-        try:
-            logs = json.load(f)
-        except json.JSONDecodeError:
-            logs = []
-
-    logs.append(alarm_entry)
-
-    # Yaz
-    with open(LOG_PATH, "w") as f:
-        json.dump(logs, f, indent=4)
+    with open(LOG_PATH, "a", encoding="utf-8") as f:
+        json.dump(alarm, f)
+        f.write("\n")
 
 
 # =====================================================
@@ -52,11 +47,34 @@ state = defaultdict(dict)
 # =====================================================
 
 def raise_alarm(alarm_type, cp_id, event):
-    print(f"\n🚨 ALARM: {alarm_type} @ {cp_id}")
-    print(f"Event: {event}\n")
+    print("🔥 RAISE_ALARM ÇAĞRILDI:", alarm_type, cp_id)
 
-    # JSON log’a kaydet
-    log_alarm_json(alarm_type, cp_id, event)
+    alarm = {
+        "id": f"{alarm_type}_{cp_id}_{int(time.time())}",
+        "event_id": f"{alarm_type}_{cp_id}_{int(time.time())}", # Frontend expects event_id
+        "anomaly_type": alarm_type, # Frontend expects anomaly_type
+        "severity": "HIGH", # Frontend expects severity
+        "message": event.get("reason", alarm_type),
+        "cp_id": cp_id, # Frontend expects cp_id
+        "time": time.strftime("%H:%M:%S"),
+        "timestamp": time.time(), 
+        "details": event # Frontend expects details
+    }
+
+    # Log to file (JSONL)
+    log_alarm_json(alarm)
+
+    publish_alarm_threadsafe(alarm)
+
+    # Trigger Walrus Anomaly Bundle
+    bundler.trigger_anomaly(alarm, {
+        "anomaly_type": alarm_type,
+        "severity": "HIGH",
+        "cp_id": cp_id,
+        "ml_score": event.get("ml_score", 0.0),
+        "rule_id": alarm_type
+    })
+
 
 
 # =====================================================
@@ -64,6 +82,7 @@ def raise_alarm(alarm_type, cp_id, event):
 # =====================================================
 
 def handle_event(event):
+    print("📩 HANDLE_EVENT:", event.get("message_type"), event.get("cp_id"))
     """
     event_bus.emit_event() tarafından çağrılır.
     Tüm event türleri buradan geçer.
@@ -88,6 +107,9 @@ def handle_event(event):
 
     # Kaydet
     s.update(event)
+
+    # Walrus Time-Batch Ingestion
+    bundler.ingest_log(event)
 
     # =============================
     #   SENARYO KONTROLLERİ

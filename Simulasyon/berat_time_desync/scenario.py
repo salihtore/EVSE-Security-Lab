@@ -1,65 +1,49 @@
 # Dosya: Simulasyon/berat_time_desync/scenario.py
 import asyncio
 import logging
-import websockets
 # Modülleri içe aktar
-from .hacker import send_attack_data, REPORTED_CONSUMPTION_KWH 
-from .istasyon import istasyon_logic
+from .payload_generator import get_drifting_data 
+from .cp_simulator import cp_event_flow      
+
+from typing import Optional
+import time
+from src.core.scenario_adapter import ScenarioAdapter
+
 
 logging.basicConfig(level=logging.INFO)
 
-# --- SENARYO PARAMETRELERİ ---
-SENARYO_PATH = '/CP_BERAT'
-SUNUCU_ADRESI = f'ws://localhost:9000{SENARYO_PATH}' 
+# --- SENARYO KOŞUCU FONKSİYONLARI ---
 
-async def run_attack():
+async def run_attack(adapter: Optional[ScenarioAdapter] = None):
     """Zaman Kaydırma ve Değer Düşürme saldırı modunu başlatır."""
-    print("\n[SCENARIO] 💣 ZAMAN KAYDIRMA SALDIRISI BAŞLADI (Çift Anomali)")
+    print("\n[SCENARIO] 💣 ZAMAN KAYDIRMA SALDIRISI BAŞLADI (Drift Modu)")
     
-    # 1. CP bağlantısını kur (istasyon.py)
-    # 2. Saldırgan bağlantısını kur (hacker.py)
+    # cp_event_flow'u çağır ve manipülasyon verisini alacağı fonksiyonu ver
+    await cp_event_flow(mode="ATTACK", adapter=adapter, get_manipulated_data=get_drifting_data)
     
-    try:
-        # Aynı anda hem CP hem de Saldırgan CSMS'e bağlanmalı (Tek bir WebSocket üzerinden).
-        # Ancak basitlik ve istikrar için, burada CP'nin kendisi saldırgan rolünü üstleniyor gibi gösterilir.
-        # En temiz çözüm, CP'nin kendisinin saldırgan mantığını başlatmasıdır.
-        async with websockets.connect(SUNUCU_ADRESI, subprotocols=['ocpp1.6']) as websocket:
-            print(f"[SCENARIO] ✅ Bağlantı başarılı: {SUNUCU_ADRESI}")
-            
-            # Normal CP akışını başlat (Mesaj döngüsü)
-            cp_task = asyncio.create_task(istasyon_logic(websocket, mode="ATTACK"))
-            
-            # Saldırı verilerini gönderme görevini başlat (Hacker/Anomali)
-            attack_task = asyncio.create_task(send_attack_data(websocket))
-            
-            # Her iki görevin de bitmesini bekle
-            await asyncio.gather(cp_task, attack_task)
-            
-    except ConnectionRefusedError:
-        logging.error("[SCENARIO] ❌ Sunucuya bağlanılamadı. Core CSMS çalışmıyor olabilir.")
-    except Exception as e:
-        logging.error(f"[SCENARIO] Beklenmedik hata: {e}")
+    print("[SCENARIO] Saldırı simülasyonu tamamlandı.")
 
-async def run_normal():
-    """Anomalisiz normal akışı başlatır (Sadece güvenli CP davranışı)."""
+async def run_normal(adapter: Optional[ScenarioAdapter] = None):
+    """Anomalisiz normal akışı başlatır."""
     
     print("\n[SCENARIO] 🟢 NORMAL MOD BAŞLADI (Anomalisiz Akış)")
     
-    try:
-        async with websockets.connect(SUNUCU_ADRESI, subprotocols=['ocpp1.6']) as websocket:
-            print(f"[SCENARIO] ✅ Bağlantı başarılı: {SUNUCU_ADRESI}")
-            # Sadece güvenli CP mantığını çalıştır
-            await istasyon_logic(websocket, mode="NORMAL")
-            
-    except ConnectionRefusedError:
-        logging.error("[SCENARIO] ❌ Sunucuya bağlanılamadı. Core CSMS çalışmıyor olabilir.")
-    except Exception as e:
-        logging.error(f"[SCENARIO] Beklenmedik hata: {e}")
+    # Normal modda, manipülasyon verisi fonksiyonunu göndermiyoruz
+
+    await cp_event_flow(mode="NORMAL", adapter=adapter)
+    
+    print("[SCENARIO] Normal simülasyon tamamlandı.")
 
 
-def run_scenario(scenario="attack"):
+def run_scenario(scenario="attack", adapter: Optional[ScenarioAdapter] = None):
     """Ana motor (run_all.py) tarafından çağrılan giriş noktası."""
     if scenario == "normal":
-        asyncio.run(run_normal())
+        asyncio.run(run_normal(adapter))
+
     else:
-        asyncio.run(run_attack())
+        asyncio.run(run_attack(adapter))
+
+if __name__ == "__main__":
+    run_scenario("attack")
+
+#python run_all.py --scenario berat_time_desync --mode attack
