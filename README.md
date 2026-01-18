@@ -27,7 +27,7 @@ Utilized for developing secure and efficient smart contracts. Move's object-cent
 ### **Walrus (Decentralized Storage)**
 Integrated for robust, cost-effective storage of large-scale EVSE data logs. By leveraging Walrus, the platform ensures that raw simulation data and evidence blobs are stored in a decentralized manner, providing high availability and verifiable integrity without burdening the main chain state.
 
-### **Microsoft SEAL (Homomorphic Encryption)**
+### **SEAL (Homomorphic Encryption)**
 Employed to perform computations on encrypted data. This allows the system to analyze encrypted charging sessions and user data for anomalies without ever exposing the sensitive raw information, preserving user privacy while maintaining robust security monitoring.
 
 ---
